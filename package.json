@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "Dum House \u2014 direct ordering website with kitchen display (Isocode SDE demo)",
   "scripts": {
-    "install:all": "npm --prefix server install && npm --prefix client install",
+    "install:all": "npm --prefix server install && npm --prefix client install --include=dev",
     "postinstall": "npm run install:all",
     "dev": "npm --prefix server run dev",
     "start": "npm --prefix server start",
