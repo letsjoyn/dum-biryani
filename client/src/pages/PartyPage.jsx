@@ -32,10 +32,16 @@ export default function PartyPage({ user, outlets, goLogin }) {
   const [form, setForm] = useState({
     name: saved?.name || user?.name || '',
     phone: saved?.phone || '',
-    outletId: saved?.outletId || (outlets[0]?.id || 1),
+    outletId: saved?.outletId || outlets[0]?.id || null,
     guests: saved?.guests || 30,
     notes: saved?.notes || '',
   });
+
+  useEffect(() => {
+    if (outlets.length > 0 && (!form.outletId || !outlets.some((o) => o.id === Number(form.outletId)))) {
+      setForm((prev) => ({ ...prev, outletId: outlets[0].id }));
+    }
+  }, [outlets]);
   const [partyDate, setPartyDate] = useState(() => {
     const d = saved?.eventAt?.slice(0, 10);
     return d && d >= firstValid() ? d : firstValid();

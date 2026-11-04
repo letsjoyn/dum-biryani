@@ -336,17 +336,37 @@ app.patch('/api/kitchen/orders/:id/promise', auth, requireRole('manager'), (req,
     .run(promisedAt, mins, `Manager override: promised time set to ${mins} min by ${req.user.name} at ${new Date().toISOString()}.`, o.id);
   res.json(emitOrder(db.prepare('SELECT * FROM orders WHERE id=?').get(o.id)));
 });
-app.patch('/api/kitchen/items/:itemId/outlet/:outletId/stock', auth, (req, res) => {
-  if (req.user.role === 'kitchen' && Number(req.params.outletId) !== req.user.outlet_id) return res.status(403).json({ error: 'You can only change your own outlet.' });
-  if (!['kitchen', 'manager'].includes(req.user.role)) return res.status(403).json({ error: 'Kitchen or manager only.' });
+const handleStockToggle = (req, res) => {
+  const itemId = Number(req.params.itemId);
+  const outletId = Number(req.params.outletId);
+  if (req.user.role === 'kitchen' && outletId !== req.user.outlet_id) {
+    return res.status(403).json({ error: 'You can only change your own outlet.' });
+  }
+  if (!['kitchen', 'manager'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Kitchen or manager only.' });
+  }
+  const item = db.prepare('SELECT id FROM items WHERE id=?').get(itemId);
+  if (!item) return res.status(404).json({ error: 'Item not found in catalog.' });
+  const outlet = db.prepare('SELECT id FROM outlets WHERE id=?').get(outletId);
+  if (!outlet) return res.status(404).json({ error: 'Outlet not found.' });
+
   const { outOfStock } = req.body || {};
-  const row = db.prepare('SELECT * FROM item_outlets WHERE item_id=? AND outlet_id=?').get(Number(req.params.itemId), Number(req.params.outletId));
-  if (!row) return res.status(404).json({ error: 'This item is not available at that outlet, so there is nothing to pause.' });
-  db.prepare('INSERT INTO item_outlets (item_id,outlet_id,out_of_stock) VALUES (?,?,?) ON CONFLICT(item_id,outlet_id) DO UPDATE SET out_of_stock=excluded.out_of_stock')
-    .run(Number(req.params.itemId), Number(req.params.outletId), outOfStock ? 1 : 0);
-  io.to(`outlet:${req.params.outletId}`).emit('menu:updated', { itemId: Number(req.params.itemId), outletId: Number(req.params.outletId), outOfStock: !!outOfStock });
-  res.json({ ok: true, outOfStock: !!outOfStock });
-});
+  const flag = outOfStock ? 1 : 0;
+  db.prepare(`
+    INSERT INTO item_outlets (item_id, outlet_id, out_of_stock)
+    VALUES (?, ?, ?)
+    ON CONFLICT(item_id, outlet_id) DO UPDATE SET out_of_stock=excluded.out_of_stock
+  `).run(itemId, outletId, flag);
+
+  io.to(`outlet:${outletId}`).emit('menu:updated', { itemId, outletId, outOfStock: !!flag });
+  io.emit('menu:updated', { itemId, outletId, outOfStock: !!flag });
+  res.json({ ok: true, itemId, outletId, outOfStock: !!flag });
+};
+
+app.patch('/api/kitchen/items/:itemId/outlet/:outletId/stock', auth, handleStockToggle);
+app.patch('/api/kitchen/items/:itemId/outlet/:outletId/pause', auth, handleStockToggle);
+app.patch('/api/admin/items/:itemId/outlet/:outletId/stock', auth, handleStockToggle);
+app.patch('/api/admin/items/:itemId/outlet/:outletId/pause', auth, handleStockToggle);
 
 // ---------- admin ----------
 app.get('/api/admin/items', auth, requireRole('manager'), (req, res) => {

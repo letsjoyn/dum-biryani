@@ -28,10 +28,10 @@ const BIRYANI_ADDONS = JSON.stringify([
   { label: 'Extra papad', price: 29 },
 ]);
 
-function seed() {
+function seed(force = false) {
   const count = db.prepare('SELECT COUNT(*) c FROM outlets').get().c;
-  if (count >= 17) { console.log('Seed skipped: data already exists.'); return; }
-  if (count > 0 && count < 17) {
+  if (!force && count >= 17) { console.log('Seed skipped: data already exists.'); return; }
+  if (force || (count > 0 && count < 17)) {
     // Reset database to ensure full 14 outlets + 3 cloud kitchens
     db.exec(`
       DELETE FROM points_ledger;
@@ -45,6 +45,7 @@ function seed() {
       DELETE FROM coupons;
       DELETE FROM users;
       DELETE FROM outlets;
+      DELETE FROM sqlite_sequence WHERE name IN ('outlets','items','users','orders','party_enquiries','points_ledger','notifications','order_events','order_items');
     `);
   }
   const hash = bcrypt.hashSync('Demo123!', 10);

@@ -13,12 +13,18 @@ const nextStage = (o) => ({ Placed: 'Preparing', Preparing: 'Ready', Ready: 'Rid
 const stageLabel = (s) => ({ Placed: 'New order', Preparing: 'Preparing', Ready: 'Ready for pickup', 'Rider handoff': 'Rider handoff', 'Handed over': 'Handed over' }[s] || s);
 
 export default function KitchenPage({ user, setUser, outlets, socketRef, onBack, backLabel, onSignOut }) {
-  const [outletId, setOutletId] = useState(user.role === 'kitchen' ? user.outlet_id : 1);
+  const [outletId, setOutletId] = useState(user.role === 'kitchen' ? user.outlet_id : (outlets[0]?.id || null));
   const [orders, setOrders] = useState([]);
   const [err, setErr] = useState('');
   const [menu, setMenu] = useState([]);
   const [override, setOverride] = useState({});
   const now = useNow(15000);
+
+  useEffect(() => {
+    if (user.role !== 'kitchen' && outlets.length > 0 && (!outletId || !outlets.some((o) => o.id === outletId))) {
+      setOutletId(outlets[0].id);
+    }
+  }, [outlets, outletId, user]);
 
   const load = async () => {
     setErr('');
@@ -41,8 +47,9 @@ export default function KitchenPage({ user, setUser, outlets, socketRef, onBack,
     s.on('connect', onConnect);
     const onCreated = (o) => { if (o.outlet_id !== target) return; setOrders((prev) => prev.some((x) => x.id === o.id) ? prev : [o, ...prev]); };
     const onUpdated = (o) => { if (o.outlet_id !== target) return; setOrders((prev) => prev.map((x) => x.id === o.id ? o : x).filter((x) => x.status !== 'Handed over' && x.status !== 'Cancelled')); };
-    s.on('order:created', onCreated); s.on('order:updated', onUpdated);
-    return () => { s.emit('leave-outlet', target); s.off('order:created', onCreated); s.off('order:updated', onUpdated); s.off('connect', onConnect); };
+    const onMenuUpdated = () => { load(); };
+    s.on('order:created', onCreated); s.on('order:updated', onUpdated); s.on('menu:updated', onMenuUpdated);
+    return () => { s.emit('leave-outlet', target); s.off('order:created', onCreated); s.off('order:updated', onUpdated); s.off('menu:updated', onMenuUpdated); s.off('connect', onConnect); };
   }, [outletId]);
 
   const outlet = outlets.find((o) => o.id === (user.role === 'kitchen' ? user.outlet_id : outletId));

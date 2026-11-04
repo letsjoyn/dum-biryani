@@ -404,20 +404,40 @@ function MenuCMS({ outlets, items, onSaved }) {
 }
 
 function StockControl({ outlets, items, onUpdated }) {
-  const [selectedOutletId, setSelectedOutletId] = useState(outlets[0]?.id || 1);
+  const [selectedOutletId, setSelectedOutletId] = useState(outlets[0]?.id || null);
   const [busyItem, setBusyItem] = useState(null);
+  const [stockErr, setStockErr] = useState('');
+  const [localOverrides, setLocalOverrides] = useState({});
+
+  useEffect(() => {
+    if (outlets.length > 0 && (!selectedOutletId || !outlets.some((o) => o.id === selectedOutletId))) {
+      setSelectedOutletId(outlets[0].id);
+    }
+  }, [outlets, selectedOutletId]);
 
   const outlet = outlets.find((o) => o.id === selectedOutletId) || outlets[0];
 
   const toggleStock = async (item, currentOos) => {
+    const nextOos = !currentOos;
+    const key = `${selectedOutletId}:${item.id}`;
     setBusyItem(item.id);
+    setStockErr('');
+    // Optimistic UI update
+    setLocalOverrides((prev) => ({ ...prev, [key]: nextOos }));
+
     try {
-      await api(`/api/kitchen/items/${item.id}/outlet/${selectedOutletId}/pause`, {
+      await api(`/api/kitchen/items/${item.id}/outlet/${selectedOutletId}/stock`, {
         method: 'PATCH',
-        body: { outOfStock: !currentOos },
+        body: { outOfStock: nextOos },
       });
-      onUpdated();
-    } catch {} finally { setBusyItem(null); }
+      if (onUpdated) await onUpdated();
+    } catch (e) {
+      // Revert on error
+      setLocalOverrides((prev) => ({ ...prev, [key]: currentOos }));
+      setStockErr(e.message || 'Failed to update stock status.');
+    } finally {
+      setBusyItem(null);
+    }
   };
 
   return (
@@ -445,6 +465,12 @@ function StockControl({ outlets, items, onUpdated }) {
         </div>
       </div>
 
+      {stockErr && (
+        <div className="banner err" style={{ marginBottom: 14 }}>
+          {stockErr}
+        </div>
+      )}
+
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         <div className="table-scroll">
           <table className="table">
@@ -454,7 +480,10 @@ function StockControl({ outlets, items, onUpdated }) {
             <tbody>
               {items.map((it) => {
                 const outletInfo = (it.outlets || []).find((o) => o.outlet_id === selectedOutletId);
-                const isOutOfStock = outletInfo ? !!outletInfo.out_of_stock : false;
+                const serverOos = outletInfo ? !!outletInfo.out_of_stock : false;
+                const overrideKey = `${selectedOutletId}:${it.id}`;
+                const isOutOfStock = localOverrides[overrideKey] !== undefined ? localOverrides[overrideKey] : serverOos;
+
                 return (
                   <tr key={it.id}>
                     <td>
@@ -479,9 +508,9 @@ function StockControl({ outlets, items, onUpdated }) {
                         className={`btn btn-sm ${isOutOfStock ? 'btn-primary' : 'btn-sec'}`}
                         disabled={busyItem === it.id}
                         onClick={() => toggleStock(it, isOutOfStock)}
-                        style={{ minWidth: 120 }}
+                        style={{ minWidth: 140 }}
                       >
-                        {isOutOfStock ? 'Mark Available' : '86 Dish (Pause)'}
+                        {busyItem === it.id ? 'Updating…' : isOutOfStock ? 'Mark Available' : '86 Dish (Pause)'}
                       </button>
                     </td>
                   </tr>

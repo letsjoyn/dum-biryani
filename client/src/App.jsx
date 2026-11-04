@@ -142,7 +142,12 @@ export default function App() {
   };
   useEffect(() => {
     loadMe();
-    api('/api/outlets').then(setOutlets).catch(() => {});
+    api('/api/outlets').then((list) => {
+      setOutlets(list);
+      if (list && list.length > 0) {
+        setOutletId((prev) => (!prev || !list.some((o) => o.id === prev)) ? list[0].id : prev);
+      }
+    }).catch(() => {});
   }, []);
 
   // ── Session expiry event ──────────────────────────────────────────
