@@ -132,6 +132,7 @@ function MenuCMS({ outlets, items, onSaved }) {
   const [saveErr, setSaveErr] = useState('');
   const [showOverrides, setShowOverrides] = useState(false);
   const [cmsSearch, setCmsSearch] = useState('');
+  const [activeOverrides, setActiveOverrides] = useState({});
 
   const save = async (e) => {
     e.preventDefault(); setSaveErr('');
@@ -175,9 +176,18 @@ function MenuCMS({ outlets, items, onSaved }) {
     formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const toggleActive = async (it) => {
-    try { await api(`/api/admin/items/${it.id}`, { method: 'PUT', body: { active: !it.active } }); onSaved(); }
-    catch (e) { setSaveErr(e.message); }
+  const toggleActive = async (it, currentActive) => {
+    const nextActive = !currentActive;
+    // Optimistic instant local update
+    setActiveOverrides((prev) => ({ ...prev, [it.id]: nextActive }));
+    try {
+      await api(`/api/admin/items/${it.id}`, { method: 'PUT', body: { active: nextActive } });
+      onSaved();
+    } catch (e) {
+      // Revert if error
+      setActiveOverrides((prev) => ({ ...prev, [it.id]: currentActive }));
+      setSaveErr(e.message);
+    }
   };
 
   const filteredItems = items.filter((it) =>
@@ -370,31 +380,36 @@ function MenuCMS({ outlets, items, onSaved }) {
               <tr><th>Item</th><th>Price</th><th>Timing</th><th>Status</th><th>Actions</th></tr>
             </thead>
             <tbody>
-              {filteredItems.map((it) => (
-                <tr key={it.id}>
-                  <td>
-                    <VegMark veg={it.veg} /> <strong>{it.name}</strong>
-                    <div className="small muted">
-                      {it.category} · {it.spice} · {it.base_minutes}m
-                      {it.portions?.length ? ` · ${it.portions.length} sizes` : ''}
-                      {it.addons?.length ? ` · ${it.addons.length} add-ons` : ''}
-                    </div>
-                  </td>
-                  <td><strong>{fmt(it.price)}</strong></td>
-                  <td><span className="small chip">{it.menu_tag}</span></td>
-                  <td>
-                    <span style={{ color: it.active ? '#10B981' : '#6B7280', fontWeight: 600, fontSize: 13 }}>
-                      {it.active ? '● Live' : '○ Paused'}
-                    </span>
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      <button className="btn btn-sec btn-sm" onClick={() => startEdit(it)}>Edit</button>
-                      <button className="btn btn-sec btn-sm" onClick={() => toggleActive(it)}>{it.active ? 'Pause' : 'Resume'}</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {filteredItems.map((it) => {
+                const isActive = activeOverrides[it.id] !== undefined ? activeOverrides[it.id] : !!it.active;
+                return (
+                  <tr key={it.id}>
+                    <td>
+                      <VegMark veg={it.veg} /> <strong>{it.name}</strong>
+                      <div className="small muted">
+                        {it.category} · {it.spice} · {it.base_minutes}m
+                        {it.portions?.length ? ` · ${it.portions.length} sizes` : ''}
+                        {it.addons?.length ? ` · ${it.addons.length} add-ons` : ''}
+                      </div>
+                    </td>
+                    <td><strong>{fmt(it.price)}</strong></td>
+                    <td><span className="small chip">{it.menu_tag}</span></td>
+                    <td>
+                      <span style={{ color: isActive ? '#10B981' : '#6B7280', fontWeight: 600, fontSize: 13 }}>
+                        {isActive ? '● Live' : '○ Paused'}
+                      </span>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button className="btn btn-sec btn-sm" onClick={() => startEdit(it)}>Edit</button>
+                        <button className="btn btn-sec btn-sm" onClick={() => toggleActive(it, isActive)}>
+                          {isActive ? 'Pause' : 'Resume'}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -594,7 +609,7 @@ function PartyEnquiries({ parties, onUpdate }) {
   );
 }
 
-export default function AdminPage({ outlets }) {
+export default function AdminPage({ outlets, socketRef }) {
   const [tab, setTab] = useState('dashboard');
   const [loading, setLoading] = useState(true);
   const [dash, setDash] = useState(null);
@@ -612,6 +627,21 @@ export default function AdminPage({ outlets }) {
   };
 
   useEffect(() => { load(); }, []);
+
+  // Real-time synchronization across sockets
+  useEffect(() => {
+    const s = socketRef?.current;
+    if (!s) return;
+    const onSync = () => { load(); };
+    s.on('admin:items-updated', onSync);
+    s.on('menu:updated', onSync);
+    s.on('order:updated', onSync);
+    return () => {
+      s.off('admin:items-updated', onSync);
+      s.off('menu:updated', onSync);
+      s.off('order:updated', onSync);
+    };
+  }, [socketRef?.current]);
 
   const tabs = [
     { key: 'dashboard', label: 'Dashboard' },

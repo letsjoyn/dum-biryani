@@ -1562,6 +1562,19 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   box-shadow: 0 12px 32px rgba(0,0,0,0.38), 0 2px 8px rgba(0,0,0,0.2);
   animation: slideUpCart 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
+@media (max-width: 600px) {
+  .sticky-cart {
+    left: 12px;
+    right: 12px;
+    bottom: 16px;
+    transform: none;
+    min-width: 0;
+    max-width: none;
+    width: auto;
+    padding: 10px 14px;
+    gap: 10px;
+  }
+}
 @keyframes slideUpCart {
   from { transform: translate(-50%, 20px); opacity: 0; }
   to { transform: translate(-50%, 0); opacity: 1; }
@@ -1596,6 +1609,12 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   font-size: 11px;
   color: #A3A39A;
   white-space: nowrap;
+}
+.sticky-cart a,
+.sticky-cart button,
+.sticky-cart span,
+.sticky-cart div {
+  text-decoration: none !important;
 }
 .sticky-cart-btn {
   display: inline-flex;
@@ -1969,47 +1988,56 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 }
 
 /* ═══════════════════════════════════════════════════════
-   CART LOYALTY CARD (Luxury Gold & Obsidian)
+   CART LOYALTY CARD (Artisanal Linen & Warm Amber Luxury)
    ═══════════════════════════════════════════════════════ */
 .cart-loyalty-card {
-  background: #181715;
-  border: 1px solid #332F28;
+  background: #FAF8F4;
+  border: 1px solid #E8E2D4;
+  border-left: 4px solid #B45309;
   border-radius: 0 !important;
   padding: 14px 16px;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
   transition: all .2s ease;
   position: relative;
-  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
 }
 .cart-loyalty-card.applied {
-  background: #1A1710;
-  border-color: #D97706;
-  box-shadow: 0 0 16px rgba(217, 119, 6, 0.15);
+  background: #F4F9F5;
+  border-color: #BBF7D0;
+  border-left-color: #10B981;
+  box-shadow: 0 2px 12px rgba(16, 185, 129, 0.08);
 }
 .cart-loyalty-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 .cart-loyalty-tag {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: #F59E0B;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  color: #92400E;
   text-transform: uppercase;
 }
 .cart-loyalty-dot {
   font-size: 8px;
+  color: #D97706;
+}
+.cart-loyalty-card.applied .cart-loyalty-dot {
   color: #10B981;
 }
 .cart-loyalty-balance {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
-  color: #FFFFFF;
+  color: #78350F;
+  background: #F2E8D8;
+  padding: 3px 8px;
+  border-radius: 0 !important;
+  letter-spacing: 0.02em;
 }
 .cart-loyalty-row {
   display: flex;
@@ -2024,40 +2052,42 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   flex: 1;
 }
 .cart-loyalty-save-text {
-  font-size: 14px;
-  color: #FFFFFF;
+  font-size: 15px;
+  color: #1C1917;
   font-weight: 700;
+  letter-spacing: -0.01em;
 }
 .cart-loyalty-rule {
-  font-size: 11.5px;
-  color: #A8A29E;
+  font-size: 12px;
+  color: #78716C;
 }
 .cart-loyalty-btn {
-  background: #F59E0B !important;
-  color: #111111 !important;
-  border: 1px solid #F59E0B !important;
+  background: #1C1917 !important;
+  color: #FFFFFF !important;
+  border: 1px solid #1C1917 !important;
   border-radius: 0 !important;
-  padding: 7px 14px !important;
-  font-size: 12.5px !important;
-  font-weight: 700 !important;
+  padding: 8px 18px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
   cursor: pointer;
   white-space: nowrap;
   transition: all .15s ease;
+  min-height: 36px;
 }
 .cart-loyalty-btn:hover {
-  background: #D97706 !important;
-  border-color: #D97706 !important;
+  background: #B45309 !important;
+  border-color: #B45309 !important;
   color: #FFFFFF !important;
 }
 .cart-loyalty-btn.applied {
-  background: #10B981 !important;
-  border-color: #10B981 !important;
+  background: #15803D !important;
+  border-color: #15803D !important;
   color: #FFFFFF !important;
 }
 .cart-loyalty-progress-note {
   font-size: 12px;
-  color: #A8A29E;
-  line-height: 1.4;
+  color: #78716C;
+  line-height: 1.45;
 }
 
 /* ═══════════════════════════════════════════════════════

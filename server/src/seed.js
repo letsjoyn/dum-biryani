@@ -2,24 +2,42 @@ const bcrypt = require('bcryptjs');
 const { db } = require('./db');
 
 const IMG = {
+  // Signature Hyderabadi Chicken Dum Biryani in traditional handi
   chickenBiryani: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=800&q=80&auto=format&fit=crop',
+  // Deep-spiced, succulent Mutton Dum Biryani with caramelized onions
+  mutton: 'https://images.unsplash.com/photo-1630409346824-4f0e7b080087?w=800&q=80&auto=format&fit=crop',
+  // Fragrant saffron Vegetable Dum Biryani
+  veg: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=800&q=80&auto=format&fit=crop',
+  // Char-grilled Paneer Tikka Biryani in clay pot
   biryani2: 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=800&q=80&auto=format&fit=crop',
+  // Masala Egg Biryani layered with birista & saffron grains
   biryani3: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=800&q=80&auto=format&fit=crop',
-  mutton: 'https://images.unsplash.com/photo-1606491956689-2ea866880c84?w=800&q=80&auto=format&fit=crop',
+  // Authentic slow-cooked Hyderabadi Mutton Haleem
   haleem: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=800&q=80&auto=format&fit=crop',
+  // Fiery, crispy Chicken 65 with curry leaves and green chillies
   chicken65: 'https://images.unsplash.com/photo-1567188040759-fb8a883dc6d6?w=800&q=80&auto=format&fit=crop',
-  curry: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=800&q=80&auto=format&fit=crop',
-  dessert: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=800&q=80&auto=format&fit=crop',
-  dessert2: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=800&q=80&auto=format&fit=crop',
-  veg: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=800&q=80&auto=format&fit=crop',
-  raita: 'https://images.unsplash.com/photo-1626074353765-517a681e40be?w=800&q=80&auto=format&fit=crop',
+  // Charcoal-grilled Chicken Tikka Kebab skewers with mint chutney
   kebab: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=800&q=80&auto=format&fit=crop',
-  bread: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=800&q=80&auto=format&fit=crop',
-  combo: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=800&q=80&auto=format&fit=crop',
-  berry: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=800&q=80&auto=format&fit=crop',
-  soda: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800&q=80&auto=format&fit=crop',
+  // Hyderabadi Mirchi ka Salan in rich peanut-sesame gravy
+  curry: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=800&q=80&auto=format&fit=crop',
+  // Fragrant Bagara Rice with whole spices and fried onions
   rice: 'https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?w=800&q=80&auto=format&fit=crop',
-  drink: 'https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=800&q=80&auto=format&fit=crop',
+  // Chilled whisked cucumber & onion Raita
+  raita: 'https://images.unsplash.com/photo-1626074353765-517a681e40be?w=800&q=80&auto=format&fit=crop',
+  // Double ka Meetha (Shahi Tukda bread pudding soaked in rabri with nuts)
+  dessert: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=800&q=80&auto=format&fit=crop',
+  // Qubani ka Meetha (Stewed Hyderabadi apricots with thick malai cream)
+  berry: 'https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=800&q=80&auto=format&fit=crop',
+  // Warm, spongy Khoya Gulab Jamun in rose syrup with pistachios
+  dessert2: 'https://images.unsplash.com/photo-1666190092159-3171cf0fbb12?w=800&q=80&auto=format&fit=crop',
+  // Fresh tandoor baked blistered Butter Naan brushed with ghee
+  bread: 'https://images.unsplash.com/photo-1763951718950-c536b1295213?w=800&q=80&auto=format&fit=crop',
+  // Soft, handkerchief-thin folded Rumali Roti
+  combo: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=800&q=80&auto=format&fit=crop',
+  // Thick golden Alphonso Mango Lassi with saffron & cardamom
+  drink: 'https://plus.unsplash.com/premium_photo-1724255863045-2ad716767715?w=800&q=80&auto=format&fit=crop',
+  // Ice-cold fizzy Thums Up Indian cola
+  soda: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=800&q=80&auto=format&fit=crop',
 };
 
 const BIRYANI_ADDONS = JSON.stringify([

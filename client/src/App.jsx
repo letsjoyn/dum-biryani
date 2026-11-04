@@ -237,8 +237,11 @@ export default function App() {
     const s = io(socketUrl, { transports: ['websocket', 'polling'], auth: { token: token() } });
     socketRef.current = s;
     s.on('menu:updated', (m) => {
-      if (Number(m.outletId) === Number(localStorage.getItem('dh_outlet'))) loadMenu();
+      if (!m || !m.outletId || Number(m.outletId) === Number(localStorage.getItem('dh_outlet'))) {
+        loadMenu();
+      }
     });
+    s.on('admin:items-updated', () => loadMenu());
     s.on('connect', () => loadMenu());
     return () => s.disconnect();
   }, []);
@@ -455,7 +458,7 @@ export default function App() {
 
         {/* Admin */}
         {view === 'admin' && user?.role === 'manager' && (
-          <AdminPage outlets={outlets} />
+          <AdminPage outlets={outlets} socketRef={socketRef} />
         )}
       </main>
 

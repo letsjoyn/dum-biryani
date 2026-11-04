@@ -192,8 +192,8 @@ export default function Cart({
                 <div className={`cart-loyalty-card ${usePoints ? 'applied' : ''}`}>
                   <div className="cart-loyalty-header">
                     <div className="cart-loyalty-tag">
-                      <span className="cart-loyalty-dot">●</span>
-                      <span>5% DIRECT REWARDS</span>
+                      <span className="cart-loyalty-dot">✦</span>
+                      <span>HOUSE LOYALTY · 5% BACK</span>
                     </div>
                     <span className="cart-loyalty-balance">{points} Pts Available</span>
                   </div>
@@ -204,19 +204,19 @@ export default function Cart({
                         <strong className="cart-loyalty-save-text">
                           Save {fmt(Math.floor(points / 100) * 50)} on this order
                         </strong>
-                        <span className="cart-loyalty-rule">Redeems {Math.floor(points / 100) * 100} points at ₹50 per 100 pts</span>
+                        <span className="cart-loyalty-rule">Redeems {Math.floor(points / 100) * 100} points (₹50 off per 100 pts)</span>
                       </div>
                       <button
                         type="button"
                         className={`cart-loyalty-btn ${usePoints ? 'applied' : ''}`}
                         onClick={() => setUsePoints(!usePoints)}
                       >
-                        {usePoints ? 'Applied ✓' : 'Redeem'}
+                        {usePoints ? 'Applied ✓' : `Redeem −${fmt(Math.floor(points / 100) * 50)}`}
                       </button>
                     </div>
                   ) : (
                     <div className="cart-loyalty-progress-note">
-                      Earn {Math.floor(subtotal / 20)} points on this order. Reach 100 points to unlock ₹50 cashback discount.
+                      Earn {Math.floor(subtotal / 20)} pts on this order. Reach 100 pts to unlock ₹50 instant checkout discount.
                     </div>
                   )}
                 </div>

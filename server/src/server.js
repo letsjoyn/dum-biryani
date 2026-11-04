@@ -360,6 +360,7 @@ const handleStockToggle = (req, res) => {
 
   io.to(`outlet:${outletId}`).emit('menu:updated', { itemId, outletId, outOfStock: !!flag });
   io.emit('menu:updated', { itemId, outletId, outOfStock: !!flag });
+  io.emit('admin:items-updated', { itemId, outletId, outOfStock: !!flag });
   res.json({ ok: true, itemId, outletId, outOfStock: !!flag });
 };
 
@@ -395,6 +396,8 @@ app.post('/api/admin/items', auth, requireRole('manager'), (req, res) => {
       db.prepare('INSERT INTO item_outlets (item_id,outlet_id,price_override) VALUES (?,?,?) ON CONFLICT(item_id,outlet_id) DO UPDATE SET price_override=excluded.price_override').run(id, Number(oid), pv);
     }
   }
+  io.emit('menu:updated', { itemId: id });
+  io.emit('admin:items-updated', { itemId: id });
   res.status(201).json(db.prepare('SELECT * FROM items WHERE id=?').get(id));
 });
 app.put('/api/admin/items/:id', auth, requireRole('manager'), (req, res) => {
@@ -427,6 +430,8 @@ app.put('/api/admin/items/:id', auth, requireRole('manager'), (req, res) => {
       db.prepare('INSERT INTO item_outlets (item_id,outlet_id,price_override) VALUES (?,?,?) ON CONFLICT(item_id,outlet_id) DO UPDATE SET price_override=excluded.price_override').run(id, Number(oid), p);
     }
   }
+  io.emit('menu:updated', { itemId: id });
+  io.emit('admin:items-updated', { itemId: id });
   res.json(db.prepare('SELECT * FROM items WHERE id=?').get(id));
 });
 app.get('/api/admin/dashboard', auth, requireRole('manager'), (req, res) => {
