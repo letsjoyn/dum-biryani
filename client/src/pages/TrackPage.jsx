@@ -1,6 +1,6 @@
 // TrackPage.jsx — Split workspace on desktop (zero outer scroll) + clean drill-down on mobile (tap order to view details)
 import { useState, useEffect } from 'react';
-import { api, fmt, fmtTime } from '../api.js';
+import { api, fmt, fmtTime, fmtDateTime, parseDate } from '../api.js';
 import { Err, StatusBadge } from '../components/Common.jsx';
 
 const STAGES = ['Placed', 'Preparing', 'Ready', 'Rider handoff', 'Handed over'];
@@ -155,13 +155,13 @@ export default function TrackPage({ user, socketRef, latestOrderNo, onGoLogin, o
     return e ? e.created_at : null;
   };
 
-  const promised = o ? new Date(o.promised_at) : null;
+  const promised = o ? parseDate(o.promised_at) : null;
   const remainingMins = promised ? Math.max(0, Math.round((promised - now) / 60000)) : 0;
   const deliveredAt = stageTime('Handed over');
 
   const headline = !o ? ''
     : isCancelled ? 'Order Cancelled'
-    : o.status === 'Handed over' ? `Delivered at ${deliveredAt ? new Date(deliveredAt).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' }) : fmtTime(o.promised_at)}`
+    : o.status === 'Handed over' ? `Delivered at ${deliveredAt ? fmtTime(deliveredAt) : fmtTime(o.promised_at)}`
     : o.status === 'Ready' ? 'Ready for pickup'
     : isLate ? `Running late by ${o.minutesLate} min`
     : `Arriving in ~${remainingMins} min`;
@@ -216,7 +216,7 @@ export default function TrackPage({ user, socketRef, latestOrderNo, onGoLogin, o
                     </div>
 
                     <div className="small muted" style={{ marginTop: 2 }}>
-                      #{ord.order_no} · {new Date(ord.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}, {new Date(ord.created_at).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}
+                      #{ord.order_no} · {fmtDateTime(ord.created_at)}
                     </div>
 
                     <div className="order-items-snippet" style={{ marginTop: 4 }}>
@@ -310,7 +310,7 @@ export default function TrackPage({ user, socketRef, latestOrderNo, onGoLogin, o
                             </div>
                             {at && (
                               <span className="small muted">
-                                {new Date(at).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}
+                                {fmtTime(at)}
                               </span>
                             )}
                           </div>
@@ -379,7 +379,7 @@ export default function TrackPage({ user, socketRef, latestOrderNo, onGoLogin, o
                           <span className="tl-dot">✓</span>
                           <span className="tl-text">
                             {u.text}
-                            <span className="small muted"> · {new Date(u.at).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}</span>
+                            <span className="small muted"> · {fmtTime(u.at)}</span>
                           </span>
                         </div>
                       ))}

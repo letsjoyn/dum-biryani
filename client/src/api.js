@@ -18,4 +18,37 @@ export async function api(path, { method = 'GET', body, auth = true } = {}) {
 }
 export const socketUrl = BASE || window.location.origin;
 export const fmt = (n) => `₹${Number(n).toLocaleString('en-IN')}`;
-export const fmtTime = (iso) => iso ? new Date(iso).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' }) : '—';
+
+export function parseDate(d) {
+  if (!d) return new Date();
+  if (d instanceof Date) return d;
+  if (typeof d === 'string') {
+    // If SQLite default format "YYYY-MM-DD HH:MM:SS" (in UTC), append Z so browser parses as UTC
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/.test(d)) {
+      return new Date(d.replace(' ', 'T') + 'Z');
+    }
+    // If "T" format without timezone offset, append Z
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(d)) {
+      return new Date(d + 'Z');
+    }
+  }
+  return new Date(d);
+}
+
+export const fmtTime = (iso) => {
+  if (!iso) return '—';
+  const d = parseDate(iso);
+  return d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' });
+};
+
+export const fmtDate = (iso) => {
+  if (!iso) return '—';
+  const d = parseDate(iso);
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+};
+
+export const fmtDateTime = (iso) => {
+  if (!iso) return '—';
+  const d = parseDate(iso);
+  return `${d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}, ${d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}`;
+};

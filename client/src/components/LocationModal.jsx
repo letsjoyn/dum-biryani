@@ -1,5 +1,5 @@
 // LocationModal.jsx — Global modal to switch outlet or delivery area
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const AREAS = [
   ['Kondapur', 17.461, 78.342], ['Gachibowli', 17.440, 78.350], ['Madhapur', 17.448, 78.389],
@@ -18,6 +18,16 @@ export default function LocationModal({
   isOpen, onClose, outlets, outletId, setOutletId, areaName, setAreaName,
 }) {
   const [geoNote, setGeoNote] = useState('');
+
+  useEffect(() => {
+    if (isOpen) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

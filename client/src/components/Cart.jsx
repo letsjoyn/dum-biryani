@@ -25,6 +25,14 @@ export default function Cart({
   const [busy, setBusy] = useState(false);
   const [estimate, setEstimate] = useState(null);
 
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
+
   const subtotal = cart.reduce((s, c) => s + c.unitPrice * c.qty, 0);
   const couponOff = couponInfo
     ? couponInfo.kind === 'percent'

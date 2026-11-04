@@ -180,7 +180,6 @@ export default function MenuCard({ item, onAdd, cart = [], onUpdateQty, canOrder
             </button>
             <div className="stepper-count-display">
               <span className="stepper-qty-num">{inCartQty}</span>
-              <span className="stepper-in-cart-label">in cart</span>
             </div>
             <button
               type="button"

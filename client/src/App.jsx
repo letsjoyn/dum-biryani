@@ -53,11 +53,12 @@ export default function App() {
   const [showLocModal, setShowLocModal] = useState(false);
 
   // ── Auth Animation State ──────────────────────────────────────────
-  const [authAnimation, setAuthAnimation] = useState(null); // { type: 'signin' | 'signout', name?: string }
+  const [authAnimation, setAuthAnimation] = useState(null); // { type: 'signin' | 'signout', role?: string, name?: string }
   const [latestOrderNo, setLatestOrderNo] = useState(null);
+  const [orderSuccessModal, setOrderSuccessModal] = useState(null);
 
   const handleSignInSuccess = (u) => {
-    setAuthAnimation({ type: 'signin', name: u.name });
+    setAuthAnimation({ type: 'signin', role: u.role, name: u.name });
     setTimeout(() => {
       setUser(u);
       setAuthNotice('');
@@ -65,8 +66,10 @@ export default function App() {
       let after = null;
       try { after = localStorage.getItem('dh_after_login'); localStorage.removeItem('dh_after_login'); } catch {}
       const allowed = after && !roleForView(after, u);
-      setView(allowed ? after : (u.role === 'manager' ? 'admin' : (u.role === 'kitchen' ? 'kitchen' : 'menu')));
-    }, 950);
+      const target = allowed ? after : (u.role === 'manager' ? 'admin' : (u.role === 'kitchen' ? 'kitchen' : 'menu'));
+      setView(target);
+      window.scrollTo(0, 0);
+    }, 1100);
   };
 
   const handleSignOut = () => {
@@ -75,9 +78,38 @@ export default function App() {
       setToken(null);
       setUser(null);
       setAuthAnimation(null);
-      setView('menu');
+      setView('login');
+      window.scrollTo(0, 0);
     }, 1050);
   };
+
+  const handleOrderSuccess = (newOrder) => {
+    setCart([]);
+    setCartOpen(false);
+    setOrderSuccessModal(newOrder);
+  };
+
+  const finishOrderSuccess = () => {
+    if (!orderSuccessModal) return;
+    const ordNo = orderSuccessModal.order_no;
+    setOrderSuccessModal(null);
+    setLatestOrderNo(ordNo);
+    setView('track');
+    window.scrollTo(0, 0);
+  };
+
+  useEffect(() => {
+    if (orderSuccessModal) {
+      const timer = setTimeout(() => {
+        finishOrderSuccess();
+      }, 2300);
+      return () => clearTimeout(timer);
+    }
+  }, [orderSuccessModal]);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [view]);
 
   const handleQuickCustomerLogin = async () => {
     try {
@@ -253,12 +285,57 @@ export default function App() {
     setCartOpen(true);
   }
 
+  // ── Auth Animation Renderer ───────────────────────────────────────
+  const renderAuthModal = () => {
+    if (!authAnimation) return null;
+    const isSignIn = authAnimation.type === 'signin';
+    const role = authAnimation.role || 'customer';
+
+    let badge = 'CUSTOMER SESSION';
+    let title = `Welcome, ${authAnimation.name ? authAnimation.name.split(' ')[0] : 'Customer'}`;
+    let sub = 'Preparing your live menu, saved cart & 5% loyalty balance…';
+
+    if (!isSignIn) {
+      badge = 'SESSION TERMINATED';
+      title = 'Signing you out…';
+      sub = 'Session credentials cleared · Returning to sign in';
+    } else if (role === 'kitchen') {
+      badge = 'LIVE KDS · KITCHEN DISPLAY SYSTEM';
+      title = 'Welcome, Kitchen Team';
+      sub = 'Connecting live WebSockets to Kondapur order tickets…';
+    } else if (role === 'manager') {
+      badge = 'CENTRAL OPS · STORE MANAGER CONSOLE';
+      title = 'Welcome, Store Manager';
+      sub = 'Loading outlet analytics, 86-ing controls & live metrics…';
+    }
+
+    return (
+      <div className={`auth-anim-overlay ${authAnimation.type} ${role}`} role="alert" aria-live="polite">
+        <div className="auth-anim-card">
+          <div className="auth-anim-brand">Dum <i>House</i></div>
+          <div className="auth-anim-badge">{badge}</div>
+          <h2 className="auth-anim-title">{title}</h2>
+          <p className="auth-anim-sub">{sub}</p>
+          <div className="auth-anim-loader-track">
+            <div className="auth-anim-loader-bar" />
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // If full-screen auth animation is active, render it immediately
+  if (authAnimation) {
+    return renderAuthModal();
+  }
+
   // ── KDS shortcut: kitchen role gets KDS immediately ───────────────
   if (user?.role === 'kitchen') {
     return (
       <KitchenPage
         user={user} setUser={setUser}
         outlets={outlets} socketRef={socketRef}
+        onSignOut={handleSignOut}
       />
     );
   }
@@ -270,6 +347,7 @@ export default function App() {
         user={user} setUser={setUser}
         outlets={outlets} socketRef={socketRef}
         onBack={() => setView('admin')} backLabel="← Back to Admin"
+        onSignOut={handleSignOut}
       />
     );
   }
@@ -379,25 +457,53 @@ export default function App() {
       )}
 
       {/* Full-Screen Animated Auth Transitions */}
-      {authAnimation && (
-        <div className={`auth-anim-overlay ${authAnimation.type}`} role="alert" aria-live="polite">
-          <div className="auth-anim-card">
-            <div className="auth-anim-brand">Dum <i>House</i></div>
-            <div className="auth-anim-badge">
-              {authAnimation.type === 'signin' ? 'Authenticating' : 'Session Terminated'}
+      {renderAuthModal()}
+
+      {/* Zomato-style Order Placed Success Celebration Modal */}
+      {orderSuccessModal && (
+        <div className="order-success-overlay" role="dialog" aria-modal="true" aria-label="Order placed successfully">
+          <div className="order-success-card">
+            {/* Animated Tick Circle with Pulsing Glow */}
+            <div className="success-tick-circle">
+              <svg className="success-svg-check" viewBox="0 0 52 52">
+                <path className="success-svg-path" fill="none" d="M14 27 l8 8 l16 -16" />
+              </svg>
             </div>
-            <h2 className="auth-anim-title">
-              {authAnimation.type === 'signin'
-                ? `Welcome, ${authAnimation.name ? authAnimation.name.split(' ')[0] : 'Customer'}`
-                : 'Signing you out…'}
-            </h2>
-            <p className="auth-anim-sub">
-              {authAnimation.type === 'signin'
-                ? 'Preparing your live menu & order history…'
-                : 'Session credentials cleared · Returning to menu'}
+
+            <div className="eyebrow" style={{ color: '#10B981', marginBottom: 4, letterSpacing: '0.12em' }}>
+              DIRECT KITCHEN CONFIRMATION
+            </div>
+            <h2 className="order-success-title">Order Placed Successfully!</h2>
+            <p className="order-success-subtitle">
+              Sent straight to the live kitchen screen at <strong>{orderSuccessModal.outlet_name || 'outlet'}</strong>.
             </p>
-            <div className="auth-anim-loader-track">
-              <div className="auth-anim-loader-bar" />
+
+            <div className="order-success-meta-pill">
+              <div style={{ textAlign: 'left' }}>
+                <span className="small muted" style={{ display: 'block', textTransform: 'uppercase', fontSize: 10.5, letterSpacing: '0.05em' }}>Order Number</span>
+                <strong style={{ fontSize: 15, color: '#FFFFFF' }}>#{orderSuccessModal.order_no}</strong>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <span className="small muted" style={{ display: 'block', textTransform: 'uppercase', fontSize: 10.5, letterSpacing: '0.05em' }}>Amount Paid</span>
+                <strong style={{ fontSize: 16, color: '#10B981' }}>₹{Number(orderSuccessModal.payable).toLocaleString('en-IN')}</strong>
+              </div>
+            </div>
+
+            {orderSuccessModal.delivery_address && (
+              <div className="small muted" style={{ marginBottom: 18, color: '#A1A1AA' }}>
+                Delivering to: <strong style={{ color: '#F4F4F5' }}>{orderSuccessModal.delivery_address}</strong>
+              </div>
+            )}
+
+            <button
+              type="button"
+              className="order-success-btn"
+              onClick={finishOrderSuccess}
+            >
+              Track Order Live Now →
+            </button>
+            <div className="small muted" style={{ marginTop: 10, fontSize: 11.5, color: '#71717A' }}>
+              Opening live order tracking…
             </div>
           </div>
         </div>
@@ -431,12 +537,7 @@ export default function App() {
           outletId={outletId} areaName={areaName}
           cartNotice={cartNotice} onDismissNotice={() => setCartNotice('')}
           goLogin={() => { setCartOpen(false); setView('login'); }}
-          onOrdered={(newOrder) => {
-            setCart([]);
-            setCartOpen(false);
-            setLatestOrderNo(newOrder?.order_no || null);
-            setView('track');
-          }}
+          onOrdered={handleOrderSuccess}
         />
       )}
     </div>

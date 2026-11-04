@@ -12,7 +12,7 @@ function useNow(ms = 15000) {
 const nextStage = (o) => ({ Placed: 'Preparing', Preparing: 'Ready', Ready: 'Rider handoff', 'Rider handoff': 'Handed over' }[o.status]);
 const stageLabel = (s) => ({ Placed: 'New order', Preparing: 'Preparing', Ready: 'Ready for pickup', 'Rider handoff': 'Rider handoff', 'Handed over': 'Handed over' }[s] || s);
 
-export default function KitchenPage({ user, setUser, outlets, socketRef, onBack, backLabel }) {
+export default function KitchenPage({ user, setUser, outlets, socketRef, onBack, backLabel, onSignOut }) {
   const [outletId, setOutletId] = useState(user.role === 'kitchen' ? user.outlet_id : 1);
   const [orders, setOrders] = useState([]);
   const [err, setErr] = useState('');
@@ -91,7 +91,7 @@ export default function KitchenPage({ user, setUser, outlets, socketRef, onBack,
           )}
           {onBack && <button className="kbtn kbtn-sec" onClick={onBack}>{backLabel || 'Back'}</button>}
           <button className="kbtn kbtn-sec" onClick={load}>Refresh</button>
-          <button className="kbtn kbtn-sec" onClick={() => { setToken(null); setUser(null); }}>Sign out</button>
+          <button className="kbtn kbtn-sec" onClick={onSignOut ? onSignOut : () => { setToken(null); setUser(null); }}>Sign out</button>
         </div>
       </div>
 

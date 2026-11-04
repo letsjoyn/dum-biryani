@@ -225,13 +225,14 @@ app.post('/api/orders', auth, requireRole('customer'), (req, res) => {
   const active = db.prepare("SELECT COUNT(*) c FROM orders WHERE outlet_id=? AND status IN ('Placed','Preparing')").get(outlet.id).c;
   const est = estimatePrep({ items: lines.map((l) => ({ baseMinutes: l.item.base_minutes, qty: l.qty })), activeOrders: active, outletMinimum: outlet.min_prep_minutes });
   const orderNo = nextOrderNo();
+  const nowIso = new Date().toISOString();
   const promisedAt = new Date(Date.now() + est.promised * 60000).toISOString();
-  const r = db.prepare(`INSERT INTO orders (order_no,user_id,outlet_id,status,subtotal,coupon_code,coupon_off,loyalty_off,points_used,points_earned,payable,gst_amount,payment_method,payment_ref,estimate_minutes,estimate_breakdown,promised_at,request_key,delivery_address)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(orderNo, me.id, outlet.id, 'Placed', totals.subtotal, coupon ? coupon.code : null, totals.couponOff, totals.loyaltyOff, totals.pointsUsed, totals.pointsEarned, totals.payable, totals.gst, paymentMethod, paymentMethod === 'UPI' ? (upiId || 'UPI·test') : `Card·${cardLast4 || '4242'}`, est.promised, JSON.stringify(est), promisedAt, requestKey, deliveryAddress);
+  const r = db.prepare(`INSERT INTO orders (order_no,user_id,outlet_id,status,subtotal,coupon_code,coupon_off,loyalty_off,points_used,points_earned,payable,gst_amount,payment_method,payment_ref,estimate_minutes,estimate_breakdown,promised_at,request_key,delivery_address,created_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(orderNo, me.id, outlet.id, 'Placed', totals.subtotal, coupon ? coupon.code : null, totals.couponOff, totals.loyaltyOff, totals.pointsUsed, totals.pointsEarned, totals.payable, totals.gst, paymentMethod, paymentMethod === 'UPI' ? (upiId || 'UPI·test') : `Card·${cardLast4 || '4242'}`, est.promised, JSON.stringify(est), promisedAt, requestKey, deliveryAddress, nowIso);
   const orderId = r.lastInsertRowid;
   lines.forEach((l) => db.prepare('INSERT INTO order_items (order_id,item_id,item_name,portion,addons,qty,unit_price) VALUES (?,?,?,?,?,?,?)')
     .run(orderId, l.item.id, l.item.name, l.portionLabel, JSON.stringify(l.addons), l.qty, l.unitPrice));
-  db.prepare('INSERT INTO order_events (order_id,status,actor_name,from_status,to_status) VALUES (?,?,?,?,?)').run(orderId, 'Placed', me.name, '', 'Placed');
+  db.prepare('INSERT INTO order_events (order_id,status,actor_name,from_status,to_status,created_at) VALUES (?,?,?,?,?,?)').run(orderId, 'Placed', me.name, '', 'Placed', nowIso);
   db.prepare('UPDATE users SET points = points - ? + ? WHERE id=?').run(totals.pointsUsed, totals.pointsEarned, me.id);
   if (req.body && typeof req.body.marketingOptIn === 'boolean') db.prepare('UPDATE users SET marketing_opt_in=? WHERE id=?').run(req.body.marketingOptIn ? 1 : 0, me.id);
   if (totals.pointsUsed > 0) db.prepare('INSERT INTO points_ledger (user_id,order_id,delta,reason) VALUES (?,?,?,?)').run(me.id, orderId, -totals.pointsUsed, `Redeemed on order ${orderNo}`);
@@ -321,7 +322,7 @@ app.patch('/api/kitchen/orders/:id/status', auth, (req, res) => {
   const { status } = req.body || {};
   if (!(STATUS_FLOW[o.status] || []).includes(status)) return bad(res, `Cannot move an order from ${o.status} to ${status}.`);
   db.prepare('UPDATE orders SET status=? WHERE id=?').run(status, o.id);
-  db.prepare('INSERT INTO order_events (order_id,status,actor_name,from_status,to_status) VALUES (?,?,?,?,?)').run(o.id, status, req.user.name, o.status, status);
+  db.prepare('INSERT INTO order_events (order_id,status,actor_name,from_status,to_status,created_at) VALUES (?,?,?,?,?,?)').run(o.id, status, req.user.name, o.status, status, new Date().toISOString());
   notify(o.id, `WhatsApp/SMS update sent — mock: your order ${o.order_no} is now ${status}.`);
   res.json(emitOrder(db.prepare('SELECT * FROM orders WHERE id=?').get(o.id)));
 });
