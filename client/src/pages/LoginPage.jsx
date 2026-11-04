@@ -3,15 +3,48 @@ import { useState } from 'react';
 import { api, setToken } from '../api.js';
 import { Err } from '../components/Common.jsx';
 
+const DEMO_ROLES = [
+  {
+    role: 'customer',
+    label: 'Customer Account',
+    badge: 'Customer Demo',
+    email: 'customer@demo.in',
+    desc: 'Orders, live kitchen tracking & 5% loyalty rewards',
+  },
+  {
+    role: 'kitchen',
+    label: 'Kitchen Staff',
+    badge: 'Kitchen KDS',
+    email: 'kitchen@demo.in',
+    desc: 'Live Kitchen Display System (Placed → Handed over)',
+  },
+  {
+    role: 'manager',
+    label: 'Store Manager',
+    badge: 'Store Admin',
+    email: 'manager@demo.in',
+    desc: 'Full access: 86-ing dishes, analytics & coupons',
+  },
+];
+
 export default function LoginPage({ onDone, notice }) {
   const [email, setEmail] = useState('customer@demo.in');
   const [password, setPassword] = useState('Demo123!');
+  const [activeRole, setActiveRole] = useState('customer');
   const [showPassword, setShowPassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
   const [mode, setMode] = useState('login');
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
+
+  const selectDemoRole = (r) => {
+    setActiveRole(r.role);
+    setEmail(r.email);
+    setPassword('Demo123!');
+    setMode('login');
+    setErr('');
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -35,16 +68,14 @@ export default function LoginPage({ onDone, notice }) {
     } catch (e2) { setErr(e2.message); } finally { setBusy(false); }
   };
 
-  const fill = (em) => { setEmail(em); setPassword('Demo123!'); setMode('login'); setErr(''); };
-
   return (
-    <section className="login-page-container" style={{ maxWidth: 440, margin: '48px auto' }}>
-      <h1 className="serif" style={{ fontSize: 38, margin: '0 0 6px' }}>
-        {mode === 'login' ? 'Welcome back' : 'Create an account'}
+    <section className="login-page-container" style={{ maxWidth: 480, margin: '40px auto' }}>
+      <h1 className="serif" style={{ fontSize: 36, margin: '0 0 6px' }}>
+        {mode === 'login' ? 'Sign in to Dum House' : 'Create an account'}
       </h1>
       <p className="muted" style={{ marginBottom: 20, fontSize: 14 }}>
         {mode === 'login'
-          ? 'Sign in to access your direct orders, live tracking, and loyalty rewards.'
+          ? 'Access your direct orders, live kitchen tracking, and 5% loyalty cashback rewards.'
           : 'Create your Dum House account to earn 5% loyalty rewards on every direct order.'}
       </p>
 
@@ -52,6 +83,31 @@ export default function LoginPage({ onDone, notice }) {
 
       {/* Main card */}
       <div className="card" style={{ padding: 24 }}>
+        {/* Top: Prominent Demo Accounts Selector */}
+        <div className="demo-accounts-top-bar">
+          <div className="eyebrow" style={{ color: 'var(--accent)', marginBottom: 4 }}>
+            Demo Accounts (Pre-filled &amp; Ready)
+          </div>
+          <div className="demo-role-grid">
+            {DEMO_ROLES.map((r) => {
+              const isSelected = activeRole === r.role && email === r.email && mode === 'login';
+              return (
+                <button
+                  key={r.role}
+                  type="button"
+                  className={`demo-role-btn ${isSelected ? 'active' : ''}`}
+                  onClick={() => selectDemoRole(r)}
+                  aria-pressed={isSelected}
+                >
+                  <span className="demo-role-btn-title">{r.label}</span>
+                  <span className="demo-role-btn-email">{r.email}</span>
+                  <span className="demo-role-btn-badge">{r.badge}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Sleek Tab Mode Switcher */}
         <div className="auth-tab-switch">
           <button
@@ -64,7 +120,7 @@ export default function LoginPage({ onDone, notice }) {
           <button
             type="button"
             className={`auth-tab-btn ${mode === 'register' ? 'active' : ''}`}
-            onClick={() => { setMode('register'); setErr(''); }}
+            onClick={() => { setMode('register'); setErr(''); setActiveRole(null); }}
           >
             Create Account
           </button>
@@ -91,7 +147,10 @@ export default function LoginPage({ onDone, notice }) {
               id="login-email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setActiveRole(DEMO_ROLES.find((d) => d.email === e.target.value)?.role || null);
+              }}
               placeholder="you@example.com"
               autoComplete="email"
               required
@@ -145,22 +204,6 @@ export default function LoginPage({ onDone, notice }) {
             {busy ? 'Please wait…' : mode === 'login' ? 'Sign In' : 'Create Account'}
           </button>
         </form>
-      </div>
-
-      {/* Quick Role Fillers */}
-      <div className="card" style={{ marginTop: 14, padding: '14px 18px', background: '#FAF9F6' }}>
-        <div className="eyebrow" style={{ marginBottom: 8 }}>Quick Sign-in (Demo Accounts)</div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <button type="button" className="btn btn-sec btn-sm" onClick={() => fill('customer@demo.in')}>
-            Customer
-          </button>
-          <button type="button" className="btn btn-sec btn-sm" onClick={() => fill('kitchen@demo.in')}>
-            Kitchen Staff
-          </button>
-          <button type="button" className="btn btn-sec btn-sm" onClick={() => fill('manager@demo.in')}>
-            Manager
-          </button>
-        </div>
       </div>
     </section>
   );

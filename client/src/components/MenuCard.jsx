@@ -15,7 +15,7 @@ function isInWindow(tag) {
   return true;
 }
 
-export default function MenuCard({ item, onAdd, canOrder = true }) {
+export default function MenuCard({ item, onAdd, cart = [], onUpdateQty, canOrder = true }) {
   const [portion, setPortion] = useState(item.portions[0]?.label || '');
   const [addons, setAddons] = useState([]);
   const [showAddons, setShowAddons] = useState(false);
@@ -37,6 +37,10 @@ export default function MenuCard({ item, onAdd, canOrder = true }) {
       : null;
 
   const disabled = !canOrder || item.outOfStock || !inWindow;
+
+  const currentKey = `${item.id}|${portion}|${addons.join(',')}`;
+  const inCartItem = (cart || []).find((c) => c.key === currentKey);
+  const inCartQty = inCartItem?.qty || 0;
 
   return (
     <article className="card menu-card" style={{ opacity: item.outOfStock ? 0.6 : 1 }}>
@@ -162,6 +166,34 @@ export default function MenuCard({ item, onAdd, canOrder = true }) {
           <button className="btn btn-sec btn-full" disabled>
             {windowShort || 'Not available now'}
           </button>
+        ) : inCartQty > 0 ? (
+          <div className="card-stepper-control" role="group" aria-label={`Quantity stepper for ${item.name}`}>
+            <button
+              type="button"
+              className="stepper-action-btn stepper-minus-btn"
+              aria-label={`Decrease quantity of ${item.name}`}
+              onClick={() => {
+                if (onUpdateQty) onUpdateQty(currentKey, inCartQty - 1);
+              }}
+            >
+              −
+            </button>
+            <div className="stepper-count-display">
+              <span className="stepper-qty-num">{inCartQty}</span>
+              <span className="stepper-in-cart-label">in cart</span>
+            </div>
+            <button
+              type="button"
+              className="stepper-action-btn stepper-plus-btn"
+              aria-label={`Increase quantity of ${item.name}`}
+              onClick={() => {
+                if (onUpdateQty) onUpdateQty(currentKey, inCartQty + 1);
+                else onAdd(item, portion, addons);
+              }}
+            >
+              +
+            </button>
+          </div>
         ) : (
           <button
             className="btn btn-full"

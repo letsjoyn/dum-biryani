@@ -34,8 +34,6 @@
 html {
   scroll-behavior: smooth;
   width: 100%;
-  max-width: 100vw;
-  overflow-x: hidden;
 }
 body {
   background: var(--bg);
@@ -45,8 +43,6 @@ body {
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   width: 100%;
-  max-width: 100vw;
-  overflow-x: hidden;
 }
 a { color: inherit; text-decoration: none; }
 img { display: block; max-width: 100%; border-radius: 0 !important; }
@@ -80,6 +76,9 @@ button, input, select, textarea {
 @media (max-width: 600px) {
   .wrap {
     padding: 0 12px;
+  }
+  main.wrap {
+    padding-bottom: 96px !important;
   }
 }
 
@@ -712,19 +711,22 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
    FILTERS & SEARCH
    ═══════════════════════════════════════════════════════ */
 .filters-bar-container {
+  position: -webkit-sticky;
   position: sticky;
   top: var(--topbar-h);
-  z-index: 35;
-  background: rgba(250,250,247,.98);
-  backdrop-filter: blur(6px);
+  z-index: 38;
+  background: #FAFAF7;
   border-bottom: 1px solid var(--line);
-  padding: 12px 0;
-  margin: 16px -20px 0;
-  padding-left: 20px;
-  padding-right: 20px;
+  padding: 12px 0 10px;
+  margin: 16px 0 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 @media (max-width: 600px) {
-  .filters-bar-container { margin: 12px -14px 0; padding-left: 14px; padding-right: 14px; }
+  .filters-bar-container {
+    padding: 10px 0 8px;
+    margin: 12px 0 0;
+  }
 }
 .filters-search-wrap {
   position: relative;
@@ -953,6 +955,66 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .addon-row input { width: auto; min-height: auto; }
 .addon-row span { flex: 1; }
 
+/* ── Menu Card Stepper (+ / −) ── */
+.card-stepper-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: #111111;
+  color: #FFFFFF;
+  border: 1px solid #111111;
+  border-radius: 0 !important;
+  min-height: 42px;
+  box-sizing: border-box;
+  padding: 0 4px;
+}
+.stepper-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 38px;
+  background: transparent;
+  color: #FFFFFF;
+  border: none;
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: 0 !important;
+  transition: all 0.15s ease;
+}
+.stepper-action-btn:hover {
+  background: #262420;
+  color: #F59E0B;
+}
+.stepper-action-btn:active {
+  background: #33302B;
+}
+.stepper-count-display {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #FFFFFF;
+  user-select: none;
+}
+.stepper-qty-num {
+  font-size: 15px;
+  font-weight: 700;
+  color: #FFFFFF;
+  min-width: 16px;
+  text-align: center;
+}
+.stepper-in-cart-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #D4D4D8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 /* ═══════════════════════════════════════════════════════
    MY ORDERS / TRACKING WORKSPACE (Strict Zero Outer Window Scroll!)
    ═══════════════════════════════════════════════════════ */
@@ -1089,27 +1151,37 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   }
 
   .mobile-back-to-orders-btn {
-    display: flex !important;
+    display: inline-flex !important;
     align-items: center;
-    gap: 8px;
-    width: 100%;
-    background: #111;
-    color: #fff;
-    border: none;
+    gap: 6px;
+    width: auto !important;
+    background: #FFFFFF !important;
+    color: var(--ink) !important;
+    border: 1px solid var(--line) !important;
     border-radius: 0 !important;
-    padding: 12px 16px;
-    font-size: 13.5px;
-    font-weight: 600;
-    margin-bottom: 12px;
+    padding: 7px 14px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    margin-bottom: 14px;
     cursor: pointer;
-    text-align: left;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    transition: all .15s ease;
   }
   .mobile-back-to-orders-btn:hover {
-    background: #222;
+    background: #F4F2EC !important;
+    border-color: #111 !important;
   }
 }
 
+.tracking-orders-sidebar {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100%;
+  box-sizing: border-box;
+}
 .sidebar-sticky-header {
+  width: 100% !important;
+  box-sizing: border-box;
   padding: 14px 16px;
   border-bottom: 1px solid var(--line);
   background: #FAF9F6;
@@ -1483,27 +1555,84 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 38;
-  background: #111;
-  color: #fff;
-  border-radius: var(--r);
-  padding: 12px 20px;
+  z-index: 50;
+  background: #111111;
+  color: #FFFFFF;
+  border: 1px solid #2B2823;
+  border-radius: 0 !important;
+  padding: 10px 14px 10px 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  min-width: 300px;
+  gap: 16px;
+  min-width: 320px;
   max-width: calc(100vw - 32px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.38), 0 2px 8px rgba(0,0,0,0.2);
+  animation: slideUpCart 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.sticky-cart button {
-  background: none;
-  border: 0;
-  color: #fff;
+@keyframes slideUpCart {
+  from { transform: translate(-50%, 20px); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+.sticky-cart-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.sticky-cart-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #B45309;
+  color: #FFFFFF;
+  font-size: 11px;
   font-weight: 700;
-  font-size: 14px;
+  letter-spacing: 0.04em;
+  padding: 3px 8px;
+  border-radius: 0 !important;
+  text-transform: uppercase;
+}
+.sticky-cart-price {
+  font-size: 16px;
+  font-weight: 700;
+  color: #FFFFFF;
+  letter-spacing: -0.01em;
+}
+.sticky-cart-gst {
+  font-size: 11px;
+  color: #A3A39A;
+  white-space: nowrap;
+}
+.sticky-cart-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #FFFFFF !important;
+  color: #111111 !important;
+  border: 1px solid #FFFFFF !important;
+  border-radius: 0 !important;
+  padding: 8px 16px !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
   cursor: pointer;
-  text-decoration: underline;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.sticky-cart-btn:hover {
+  background: #F4F2EC !important;
+  color: #B45309 !important;
+  border-color: #B45309 !important;
+}
+.sticky-cart-arrow {
+  font-size: 15px;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+.sticky-cart-btn:hover .sticky-cart-arrow {
+  transform: translateX(3px);
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -1753,6 +1882,82 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   color: #FFFFFF !important;
   border-color: #DC2626 !important;
   box-shadow: 0 2px 8px rgba(220, 38, 38, 0.25) !important;
+}
+
+/* ── Demo Role Selector at Top of Login ── */
+.demo-accounts-top-bar {
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+.demo-role-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+@media (max-width: 540px) {
+  .demo-role-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.demo-role-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  padding: 10px 12px;
+  background: #FAF9F6;
+  border: 1px solid var(--line);
+  border-radius: 0 !important;
+  cursor: pointer;
+  transition: all .15s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+.demo-role-btn:hover {
+  background: #F4F2EC;
+  border-color: #999;
+}
+.demo-role-btn.active {
+  background: #111111 !important;
+  color: #FFFFFF !important;
+  border-color: #B45309 !important;
+  box-shadow: 0 0 0 1px #B45309;
+}
+.demo-role-btn-title {
+  font-size: 13px;
+  font-weight: 700;
+  display: block;
+  line-height: 1.3;
+}
+.demo-role-btn.active .demo-role-btn-title {
+  color: #FFFFFF;
+}
+.demo-role-btn-email {
+  font-size: 11px;
+  color: var(--muted);
+  display: block;
+  margin-top: 2px;
+}
+.demo-role-btn.active .demo-role-btn-email {
+  color: #D4D4D8;
+}
+.demo-role-btn-badge {
+  display: inline-block;
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  background: #EFECE4;
+  color: #444;
+  margin-top: 6px;
+  font-weight: 600;
+  border-radius: 0 !important;
+}
+.demo-role-btn.active .demo-role-btn-badge {
+  background: #B45309;
+  color: #FFFFFF;
 }
 
 /* ── Auth Tabs in Login ── */

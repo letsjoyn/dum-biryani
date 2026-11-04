@@ -15,7 +15,7 @@ function isInWindow(tag) {
 
 export default function MenuPage({
   user, outlets, outletId, areaName,
-  menu, loading, error, loadMenu, addToCart, suggestions,
+  menu, loading, error, loadMenu, cart = [], addToCart, onUpdateQty, suggestions,
   addSuggestion, sugMsg, setSugMsg, cartNotice, setCartNotice,
   onOpenLocationModal,
 }) {
@@ -178,7 +178,9 @@ export default function MenuPage({
               <MenuCard
                 key={m.id}
                 item={m}
+                cart={cart}
                 onAdd={addToCart}
+                onUpdateQty={onUpdateQty}
                 canOrder={user?.role !== 'manager'}
               />
             ))}

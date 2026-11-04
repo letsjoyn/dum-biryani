@@ -260,7 +260,7 @@ export default function TrackPage({ user, socketRef, latestOrderNo, onGoLogin, o
                   className="mobile-back-to-orders-btn"
                   onClick={() => setMobileDetailOpen(false)}
                 >
-                  ← Back to all orders
+                  ← All Orders
                 </button>
 
                 {/* 1. Header Banner */}

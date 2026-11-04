@@ -238,6 +238,13 @@ export default function App() {
     });
   }
 
+  function updateCartQty(key, nextQty) {
+    setCart((prev) => {
+      if (nextQty <= 0) return prev.filter((c) => c.key !== key);
+      return prev.map((c) => c.key === key ? { ...c, qty: Math.min(20, nextQty) } : c);
+    });
+  }
+
   function addSuggestion(sug) {
     const item = menu.find((m) => m.name === sug.item_name);
     if (!item) { setSugMsg('That item is not on this outlet menu right now.'); return; }
@@ -320,7 +327,7 @@ export default function App() {
             outletId={outletId} setOutletId={setOutletId}
             areaName={areaName} setAreaName={setAreaName}
             menu={menu} loading={loading} error={error} loadMenu={loadMenu}
-            cart={cart} addToCart={addToCart}
+            cart={cart} addToCart={addToCart} onUpdateQty={updateCartQty}
             suggestions={suggestions} addSuggestion={addSuggestion}
             sugMsg={sugMsg} setSugMsg={setSugMsg}
             cartNotice={cartNotice} setCartNotice={setCartNotice}
@@ -398,13 +405,20 @@ export default function App() {
 
       {/* Sticky cart pill */}
       {cartCount > 0 && !cartOpen && view === 'menu' && (
-        <div className="sticky-cart">
-          <span>
-            <strong>{cartCount} item{cartCount > 1 ? 's' : ''}</strong>
-            {' '}· ₹{cartTotal.toLocaleString('en-IN')}
-            <span className="small" style={{ opacity: 0.7 }}> incl. GST</span>
-          </span>
-          <button onClick={() => setCartOpen(true)}>View cart →</button>
+        <div className="sticky-cart" role="region" aria-label="Cart summary">
+          <div className="sticky-cart-info">
+            <span className="sticky-cart-badge">{cartCount} {cartCount === 1 ? 'item' : 'items'}</span>
+            <span className="sticky-cart-price">₹{cartTotal.toLocaleString('en-IN')}</span>
+            <span className="sticky-cart-gst">incl. 5% GST</span>
+          </div>
+          <button
+            type="button"
+            className="sticky-cart-btn"
+            onClick={() => setCartOpen(true)}
+          >
+            <span>View cart</span>
+            <span className="sticky-cart-arrow">→</span>
+          </button>
         </div>
       )}
 
