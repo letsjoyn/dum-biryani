@@ -113,8 +113,7 @@ export default function KitchenPage({ user, setUser, outlets, socketRef, onBack,
         {/* Order cards */}
         {orders.length === 0 ? (
           <div className="kds-card" style={{ marginTop: 0, textAlign: 'center', padding: 32 }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>✅</div>
-            <h2 style={{ fontSize: 24 }}>No active orders</h2>
+            <h2 style={{ fontSize: 24, margin: '8px 0' }}>No active orders</h2>
             <p style={{ color: '#666' }}>New orders appear here instantly — no refresh needed.</p>
           </div>
         ) : (
@@ -159,7 +158,7 @@ export default function KitchenPage({ user, setUser, outlets, socketRef, onBack,
                   </div>
 
                   {o.delivery_address && (
-                    <div className="kds-address">📍 {o.delivery_address}</div>
+                    <div className="kds-address">Delivery: {o.delivery_address}</div>
                   )}
 
                   <div className={`kds-promise ${late ? 'late' : ''}`}>
@@ -242,3 +241,4 @@ export default function KitchenPage({ user, setUser, outlets, socketRef, onBack,
     </div>
   );
 }
+

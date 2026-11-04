@@ -76,7 +76,7 @@ function Dashboard({ dash }) {
       <div className="card">
         <h3 style={{ marginTop: 0 }}>Late orders right now</h3>
         {dash.lateOrders.length === 0 ? (
-          <p className="muted">No late orders. ✅ Good kitchen.</p>
+          <p className="muted">No late orders. All kitchens running on schedule.</p>
         ) : (
           <div className="table-scroll">
             <table className="table">
@@ -211,8 +211,8 @@ function MenuCMS({ outlets, items, err, onSaved }) {
           <div>
             <label>Type</label>
             <div style={{ display: 'flex', gap: 6 }}>
-              <button type="button" className={`chip ${form.veg ? 'on' : ''}`} onClick={() => setForm({ ...form, veg: true })}>🟢 Veg</button>
-              <button type="button" className={`chip ${!form.veg ? 'on' : ''}`} onClick={() => setForm({ ...form, veg: false })}>🔴 Non-veg</button>
+              <button type="button" className={`category-filter-btn ${form.veg ? 'active' : ''}`} onClick={() => setForm({ ...form, veg: true })}>Veg</button>
+              <button type="button" className={`category-filter-btn ${!form.veg ? 'active' : ''}`} onClick={() => setForm({ ...form, veg: false })}>Non-veg</button>
             </div>
           </div>
         </div>

@@ -48,6 +48,9 @@ export default function App() {
   const [suggestions, setSuggestions] = useState([]);
   const [sugMsg, setSugMsg] = useState('');
 
+  // ── Location Modal State ──────────────────────────────────────────
+  const [showLocModal, setShowLocModal] = useState(false);
+
   const socketRef = useRef(null);
 
   // ── Persist ───────────────────────────────────────────────────────
@@ -237,6 +240,9 @@ export default function App() {
         cartCount={cartCount}
         onCartOpen={() => setCartOpen(true)}
         setAuthNotice={setAuthNotice}
+        outletName={outlet?.name}
+        areaName={areaName}
+        onOpenLocationModal={() => setShowLocModal(true)}
       />
 
       <main className="wrap">
@@ -280,7 +286,7 @@ export default function App() {
             suggestions={suggestions} addSuggestion={addSuggestion}
             sugMsg={sugMsg} setSugMsg={setSugMsg}
             cartNotice={cartNotice} setCartNotice={setCartNotice}
-            socketRef={socketRef}
+            showLocModal={showLocModal} setShowLocModal={setShowLocModal}
           />
         )}
 

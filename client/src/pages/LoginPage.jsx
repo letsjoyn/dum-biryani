@@ -54,14 +54,14 @@ export default function LoginPage({ onDone, notice }) {
           Tap a role to fill its email, then Sign in.
         </p>
         <div className="login-demos">
-          <button className="chip" onClick={() => fill('customer@demo.in')}>
-            🧑 Customer
+          <button type="button" className="btn btn-sec btn-sm" onClick={() => fill('customer@demo.in')}>
+            Customer (Demo)
           </button>
-          <button className="chip" onClick={() => fill('kitchen@demo.in')}>
-            👨‍🍳 Kitchen (Kondapur)
+          <button type="button" className="btn btn-sec btn-sm" onClick={() => fill('kitchen@demo.in')}>
+            Kitchen — Kondapur
           </button>
-          <button className="chip" onClick={() => fill('manager@demo.in')}>
-            📊 Manager
+          <button type="button" className="btn btn-sec btn-sm" onClick={() => fill('manager@demo.in')}>
+            Manager
           </button>
         </div>
         <p className="small muted" style={{ marginTop: 8, marginBottom: 0 }}>
@@ -162,3 +162,4 @@ export default function LoginPage({ onDone, notice }) {
     </section>
   );
 }
+

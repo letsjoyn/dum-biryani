@@ -1,8 +1,8 @@
-// MenuPage.jsx — outlet picker + menu grid
-import { useState, useEffect, useMemo, useRef } from 'react';
-import { api, fmt } from '../api.js';
+// MenuPage.jsx — Sleek menu with compact location switcher and sharp minimal cards
+import { useState, useMemo, useEffect } from 'react';
 import MenuCard from '../components/MenuCard.jsx';
 import { Err, MenuSkeletons } from '../components/Common.jsx';
+import { fmt } from '../api.js';
 
 const AREAS = [
   ['Kondapur', 17.461, 78.342], ['Gachibowli', 17.440, 78.350], ['Madhapur', 17.448, 78.389],
@@ -29,7 +29,8 @@ function isInWindow(tag) {
 export default function MenuPage({
   user, outlets, outletId, setOutletId, areaName, setAreaName,
   menu, loading, error, loadMenu, cart, addToCart, suggestions,
-  addSuggestion, sugMsg, setSugMsg, cartNotice, setCartNotice, socketRef,
+  addSuggestion, sugMsg, setSugMsg, cartNotice, setCartNotice,
+  showLocModal, setShowLocModal,
 }) {
   const [heroFailed, setHeroFailed] = useState(false);
   const [search, setSearch] = useState('');
@@ -55,7 +56,7 @@ export default function MenuPage({
 
   const pickArea = (name) => { setAreaName(name); setGeoNote(''); };
   const useMyLocation = () => {
-    if (!navigator.geolocation) { setGeoNote('Geolocation not available — pick an area.'); return; }
+    if (!navigator.geolocation) { setGeoNote('Geolocation not available in your browser — select an area manually.'); return; }
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
@@ -64,13 +65,13 @@ export default function MenuPage({
           .sort((a, b) => a.d - b.d);
         const near = ranked.find((o) => o.d <= o.delivery_radius_km);
         if (!near) {
-          setGeoNote(`Outside every delivery radius (nearest: ${ranked[0]?.name} ~${ranked[0]?.d.toFixed(1)} km). Pick an area.`);
+          setGeoNote(`Outside all delivery zones (nearest: ${ranked[0]?.name} ~${ranked[0]?.d.toFixed(1)} km). Pick an area manually.`);
           return;
         }
-        setGeoNote(`Nearest: ${near.name} (~${near.d.toFixed(1)} km).`);
+        setGeoNote(`Nearest outlet found: ${near.name} (~${near.d.toFixed(1)} km).`);
         setOutletId(near.id);
       },
-      () => setGeoNote('Location denied — pick an area.')
+      () => setGeoNote('Location access denied — pick an area from the list.')
     );
   };
 
@@ -102,8 +103,7 @@ export default function MenuPage({
         <div className="eyebrow">Hyderabad · Since the dum was sealed</div>
         <h1>Dum, <i>done right.</i></h1>
         <p>
-          Hyderabadi biryani ordered direct — no marketplace commission, an honest
-          prep time, and your order on the kitchen screen the second you pay.
+          Hyderabadi biryani ordered direct — honest prep time, zero marketplace commission, and straight to the outlet kitchen.
         </p>
         <p className="small muted">All prices include 5% GST · FSSAI licence shown per outlet.</p>
         <div className="hero-photo">
@@ -123,181 +123,263 @@ export default function MenuPage({
         </div>
       </section>
 
-      {/* ── Outlet picker ── */}
-      <div className="card picker-card section-gap">
-        <label htmlFor="area-select">Where are you?</label>
-        <div className="picker-row">
-          <select
-            id="area-select"
-            value={areaName}
-            onChange={(e) => pickArea(e.target.value)}
-            style={{ flex: 1, minWidth: 0 }}
-          >
-            {AREAS.map((a) => <option key={a[0]} value={a[0]}>{a[0]}</option>)}
-          </select>
-          <button type="button" className="btn btn-sec" style={{ whiteSpace: 'nowrap' }} onClick={useMyLocation}>
-            📍 Use my location
-          </button>
-        </div>
-
-        {geoNote && (
-          <div className="banner" style={{ marginTop: 10, display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
-            <span className="small">{geoNote}</span>
-            <button type="button" className="btn btn-sec btn-sm" onClick={() => setGeoNote('')}>✕</button>
+      {/* ── Compact Location & Outlet Bar (Replaces bulky "Where are you" card) ── */}
+      <div className="outlet-status-bar">
+        <div className="outlet-status-info">
+          <div className="outlet-title-row">
+            <span className="outlet-current-name">{outlet?.name || 'Kondapur'} Outlet</span>
+            <span className="outlet-tag">Delivering to {areaName}</span>
           </div>
-        )}
-
-        {outsideRadius ? (
-          <>
-            <div className="banner err" style={{ marginTop: 12 }}>
-              <strong>Outside delivery radius.</strong> No outlet delivers to {area[0]} yet — try Kondapur, Gachibowli or Kukatpally.
-            </div>
-            <select disabled aria-label="Outlet" style={{ marginTop: 10 }}>
-              <option>No outlet delivers to this area</option>
-            </select>
-          </>
-        ) : (
-          <>
-            <div className="eyebrow" style={{ marginTop: 16 }}>Delivering outlet — tap to pick</div>
-            <div className="outlet-cards">
-              {inRadius.map((o) => (
-                <button
-                  key={o.id}
-                  type="button"
-                  className={`outlet-card ${o.id === outletId ? 'on' : ''}`}
-                  onClick={() => setOutletId(o.id)}
-                  aria-pressed={o.id === outletId}
-                >
-                  <span className="outlet-card-top">
-                    <strong>{o.name}</strong>
-                    {o.id === outletId && <span className="outlet-check">✓ Selected</span>}
-                  </span>
-                  <span className="small muted">~{o.distanceKm.toFixed(1)} km · radius {o.delivery_radius_km} km</span>
-                  <span className="small muted">FSSAI {o.fssai}</span>
-                </button>
-              ))}
-            </div>
-            {outlet && (
-              <p className="small muted picker-line">
-                {outlet.address} · {outlet.phone} · Min prep {outlet.min_prep_minutes} min
-              </p>
-            )}
-          </>
-        )}
+          <div className="outlet-meta-row">
+            <span>FSSAI: {outlet?.fssai || '—'}</span>
+            <span>·</span>
+            <span>Min prep: {outlet?.min_prep_minutes || 30} mins</span>
+            {outlet?.address && <span>·</span>}
+            {outlet?.address && <span className="outlet-address-short">{outlet.address}</span>}
+          </div>
+        </div>
+        <button
+          type="button"
+          className="btn btn-sec btn-sm change-loc-btn"
+          onClick={() => setShowLocModal(true)}
+        >
+          Change Outlet / Area
+        </button>
       </div>
 
-      {/* ── Sticky filters ── */}
-      {!outsideRadius && (
-        <div className="filters-sticky section-gap">
-          <div className="search-bar">
-            <input
-              aria-label="Search the menu"
-              placeholder="Search dishes…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            {search && (
-              <button type="button" className="btn btn-sec btn-sm" onClick={() => setSearch('')}>✕</button>
-            )}
-          </div>
-          <div className="pill-row">
-            <button
-              type="button"
-              className={`veg-toggle ${vegOnly ? 'on' : ''}`}
-              aria-pressed={vegOnly}
-              onClick={() => setVegOnly(!vegOnly)}
-            >
-              <span className={`switch ${vegOnly ? 'on' : ''}`}><i /></span>
-              Veg only
-            </button>
-            {cats.map((c) => (
+      {/* ── Location Switcher Modal / Overlay ── */}
+      {showLocModal && (
+        <div className="modal-backdrop" onClick={() => setShowLocModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div>
+                <h3 className="serif" style={{ fontSize: 24, margin: 0 }}>Select Delivery Location</h3>
+                <p className="small muted" style={{ margin: '4px 0 0' }}>Orders route automatically to the nearest kitchen.</p>
+              </div>
               <button
-                key={c}
-                className={`chip ${cat === c ? 'on' : ''}`}
-                onClick={() => setCat(c)}
+                type="button"
+                className="btn btn-sec btn-sm"
+                onClick={() => setShowLocModal(false)}
+                aria-label="Close"
               >
-                {c}
+                ✕
               </button>
-            ))}
+            </div>
+
+            <div className="modal-body">
+              <label htmlFor="area-select" style={{ fontSize: 13, fontWeight: 600 }}>Delivery Area (Hyderabad)</label>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+                <select
+                  id="area-select"
+                  value={areaName}
+                  onChange={(e) => pickArea(e.target.value)}
+                  style={{ flex: 1 }}
+                >
+                  {AREAS.map((a) => <option key={a[0]} value={a[0]}>{a[0]}</option>)}
+                </select>
+                <button
+                  type="button"
+                  className="btn btn-sec btn-sm"
+                  style={{ whiteSpace: 'nowrap' }}
+                  onClick={useMyLocation}
+                >
+                  Locate me
+                </button>
+              </div>
+
+              {geoNote && (
+                <div className="banner info" style={{ marginBottom: 14 }}>
+                  {geoNote}
+                </div>
+              )}
+
+              {outsideRadius ? (
+                <div className="banner err">
+                  <strong>Outside delivery radius.</strong> No outlet delivers to {area[0]} yet. Please choose another area (e.g. Kondapur, Gachibowli, Kukatpally).
+                </div>
+              ) : (
+                <>
+                  <div className="eyebrow" style={{ margin: '14px 0 8px' }}>Select Kitchen Outlet</div>
+                  <div className="outlet-selector-grid">
+                    {inRadius.map((o) => (
+                      <div
+                        key={o.id}
+                        className={`outlet-select-card ${o.id === outletId ? 'selected' : ''}`}
+                        onClick={() => { setOutletId(o.id); setShowLocModal(false); }}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { setOutletId(o.id); setShowLocModal(false); } }}
+                      >
+                        <div className="row">
+                          <strong>{o.name}</strong>
+                          {o.id === outletId && <span className="badge-selected">Selected</span>}
+                        </div>
+                        <div className="small muted" style={{ marginTop: 4 }}>
+                          ~{o.distanceKm.toFixed(1)} km away · Delivery within {o.delivery_radius_km} km
+                        </div>
+                        <div className="small muted">FSSAI: {o.fssai}</div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-sec btn-full"
+                onClick={() => setShowLocModal(false)}
+              >
+                Confirm Location
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* ── Menu content ── */}
-      <div className="section-gap">
+      {/* ── Sticky Filter Bar ── */}
+      {!outsideRadius && (
+        <div className="filters-bar-container">
+          <div className="filters-search-wrap">
+            <input
+              aria-label="Search the menu"
+              placeholder="Search dishes by name or description…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="menu-search-input"
+            />
+            {search && (
+              <button
+                type="button"
+                className="search-clear-btn"
+                onClick={() => setSearch('')}
+                aria-label="Clear search"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          <div className="filters-actions-wrap">
+            <button
+              type="button"
+              className={`filter-btn-toggle ${vegOnly ? 'active' : ''}`}
+              aria-pressed={vegOnly}
+              onClick={() => setVegOnly(!vegOnly)}
+            >
+              <span className={`toggle-box ${vegOnly ? 'checked' : ''}`} />
+              Veg Only
+            </button>
+
+            <div className="categories-scroll-list">
+              {cats.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  className={`category-filter-btn ${cat === c ? 'active' : ''}`}
+                  onClick={() => setCat(c)}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Menu Section ── */}
+      <div style={{ marginTop: 20 }}>
         {cartNotice && (
           <div className="banner" style={{ marginBottom: 16 }}>
             {cartNotice}
-            <button type="button" className="btn btn-sec btn-sm" style={{ marginLeft: 8 }} onClick={() => setCartNotice('')}>Dismiss</button>
+            <button
+              type="button"
+              className="btn btn-sec btn-sm"
+              style={{ marginLeft: 8 }}
+              onClick={() => setCartNotice('')}
+            >
+              Dismiss
+            </button>
           </div>
         )}
+
         {menu.some((m) => !isInWindow(m.menu_tag)) && (
           <div className="banner" style={{ marginBottom: 16 }}>
-            Some dishes are lunch or dinner only — they'll appear when their time window opens.
+            Note: Some items are served only during Lunch (11:00-16:00) or Dinner (18:00+). All-day items are available immediately.
           </div>
         )}
 
         {outsideRadius ? (
-          <div className="card">
-            <h2 className="serif" style={{ fontSize: 26 }}>No menu here yet.</h2>
-            <p className="muted">Choose a delivery area above that an outlet serves.</p>
+          <div className="card empty-state">
+            <h2 className="serif" style={{ fontSize: 26 }}>No delivery available here yet.</h2>
+            <p className="muted">Please switch your delivery area to Kondapur, Gachibowli, Kukatpally, or Banjara Hills.</p>
+            <button className="btn btn-sec" onClick={() => setShowLocModal(true)}>
+              Change Area
+            </button>
           </div>
         ) : (
           <>
             <Err msg={error} retry={loadMenu} />
-            {loading
-              ? <MenuSkeletons count={6} />
-              : filtered.length === 0
-              ? (
-                <div className="card empty-state">
-                  <h2 className="serif" style={{ fontSize: 24 }}>Nothing matches.</h2>
-                  <p className="muted">Try a different dish, or clear the veg filter.</p>
-                  <button className="btn btn-sec" onClick={() => { setSearch(''); setVegOnly(false); setCat('All'); }}>
-                    Clear filters
-                  </button>
-                </div>
-              )
-              : (
-                <div className="menu-grid">
-                  {filtered.map((m) => (
-                    <MenuCard
-                      key={m.id}
-                      item={m}
-                      onAdd={addToCart}
-                      canOrder={user?.role !== 'manager'}
-                    />
-                  ))}
-                </div>
-              )
-            }
+            {loading ? (
+              <MenuSkeletons count={6} />
+            ) : filtered.length === 0 ? (
+              <div className="card empty-state">
+                <h2 className="serif" style={{ fontSize: 24 }}>No dishes found</h2>
+                <p className="muted">No items match your active search or filters.</p>
+                <button
+                  className="btn btn-sec"
+                  onClick={() => { setSearch(''); setVegOnly(false); setCat('All'); }}
+                >
+                  Reset Filters
+                </button>
+              </div>
+            ) : (
+              <div className="menu-grid">
+                {filtered.map((m) => (
+                  <MenuCard
+                    key={m.id}
+                    item={m}
+                    onAdd={addToCart}
+                    canOrder={user?.role !== 'manager'}
+                  />
+                ))}
+              </div>
+            )}
           </>
         )}
       </div>
 
-      {/* ── AI "Order again" suggestions ── */}
+      {/* ── Order Again (Reorder Suggestions) ── */}
       {user?.role === 'customer' && visibleSuggestions.length > 0 && (
-        <section className="card section-gap">
-          <div className="eyebrow">Order again</div>
-          <h2 className="serif" style={{ fontSize: 24, margin: '6px 0 4px' }}>From your last orders</h2>
-          <p className="small muted" style={{ marginTop: 0 }}>
-            Suggestions only — nothing is added until you tap Add. Today's prices at this outlet.
+        <section className="card reorder-section" style={{ marginTop: 32 }}>
+          <div className="eyebrow">Smart Reorder</div>
+          <h2 className="serif" style={{ fontSize: 24, margin: '6px 0 4px' }}>From your past orders</h2>
+          <p className="small muted" style={{ margin: '0 0 14px' }}>
+            AI suggestions based on your order history. Nothing is added until you click Add.
           </p>
           {sugMsg && (
             <div className="banner" style={{ marginBottom: 10 }}>
               {sugMsg}
-              <button type="button" className="btn btn-sec btn-sm" style={{ marginLeft: 8 }} onClick={() => setSugMsg('')}>Dismiss</button>
+              <button type="button" className="btn btn-sec btn-sm" style={{ marginLeft: 8 }} onClick={() => setSugMsg('')}>
+                Dismiss
+              </button>
             </div>
           )}
-          {visibleSuggestions.map((s, i) => (
-            <div key={i} className="suggest-row">
-              <div>
-                <strong>{s.item_name}</strong>
-                {s.portion && <span className="small muted"> · {s.portion}</span>}
-                <span className="small muted"> · {fmt(s.currentPrice)}</span>
+          <div className="reorder-grid">
+            {visibleSuggestions.map((s, i) => (
+              <div key={i} className="reorder-card">
+                <div>
+                  <strong>{s.item_name}</strong>
+                  {s.portion && <span className="small muted"> · {s.portion}</span>}
+                  <div className="small price" style={{ marginTop: 2 }}>{fmt(s.currentPrice)}</div>
+                </div>
+                <button className="btn btn-sec btn-sm" onClick={() => addSuggestion(s)}>
+                  Add
+                </button>
               </div>
-              <button className="btn btn-sm" onClick={() => addSuggestion(s)}>Add</button>
-            </div>
-          ))}
+            ))}
+          </div>
         </section>
       )}
     </>

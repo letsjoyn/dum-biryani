@@ -222,3 +222,4 @@ export default function PartyPage({ user, outlets, goLogin }) {
     </section>
   );
 }
+

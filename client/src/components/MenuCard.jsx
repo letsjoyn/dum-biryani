@@ -77,7 +77,7 @@ export default function MenuCard({ item, onAdd, canOrder = true }) {
             {item.spice}
           </span>
           {item.allergens && (
-            <span className="tag" title={`Allergens: ${item.allergens}`}>⚠ {item.allergens}</span>
+            <span className="tag" title={`Allergens: ${item.allergens}`}>Allergens: {item.allergens}</span>
           )}
         </div>
       </div>
@@ -92,7 +92,7 @@ export default function MenuCard({ item, onAdd, canOrder = true }) {
                 <button
                   key={pp.label}
                   type="button"
-                  className={`chip ${portion === pp.label ? 'on' : ''}`}
+                  className={`portion-chip-btn ${portion === pp.label ? 'active' : ''}`}
                   onClick={() => setPortion(pp.label)}
                 >
                   {pp.label} · {fmt(pp.price)}
@@ -174,3 +174,4 @@ export default function MenuCard({ item, onAdd, canOrder = true }) {
     </article>
   );
 }
+

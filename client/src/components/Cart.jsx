@@ -116,9 +116,8 @@ export default function Cart({
 
           {cart.length === 0 ? (
             <div className="empty-state" style={{ padding: '48px 0' }}>
-              <div style={{ fontSize: 48, marginBottom: 12 }}>🛒</div>
               <h3 className="serif" style={{ fontSize: 22 }}>Your cart is empty</h3>
-              <p className="muted">Add something from the menu first.</p>
+              <p className="muted">Add dishes from the menu to get started.</p>
               <button className="btn btn-sec" onClick={onClose}>Browse menu</button>
             </div>
           ) : (
@@ -292,3 +291,4 @@ export default function Cart({
     </>
   );
 }
+
