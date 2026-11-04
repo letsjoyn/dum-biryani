@@ -187,23 +187,39 @@ export default function Cart({
                 {couponInfo && <p className="small" style={{ color: '#1A7F37', marginTop: 4 }}>✓ {couponInfo.code} — {couponInfo.description}</p>}
               </div>
 
-              {/* Loyalty */}
-              {user && points < 100 && (
-                <p className="small muted" style={{ marginTop: 10 }}>
-                  You have {points} loyalty points — earn 100 for ₹50 off at checkout.
-                </p>
-              )}
-              {user && points >= 100 && (
-                <button
-                  type="button"
-                  className={`loyalty-toggle ${usePoints ? 'on' : ''}`}
-                  aria-pressed={usePoints}
-                  onClick={() => setUsePoints(!usePoints)}
-                  style={{ marginTop: 10 }}
-                >
-                  <span className={`switch ${usePoints ? 'on' : ''}`}><i /></span>
-                  <span>Use loyalty points — {points} pts = {fmt(Math.floor(points / 100) * 50)} off</span>
-                </button>
+              {/* Loyalty Reward Card */}
+              {user && (
+                <div className={`cart-loyalty-card ${usePoints ? 'applied' : ''}`}>
+                  <div className="cart-loyalty-header">
+                    <div className="cart-loyalty-tag">
+                      <span className="cart-loyalty-dot">●</span>
+                      <span>5% DIRECT REWARDS</span>
+                    </div>
+                    <span className="cart-loyalty-balance">{points} Pts Available</span>
+                  </div>
+
+                  {points >= 100 ? (
+                    <div className="cart-loyalty-row">
+                      <div className="cart-loyalty-info">
+                        <strong className="cart-loyalty-save-text">
+                          Save {fmt(Math.floor(points / 100) * 50)} on this order
+                        </strong>
+                        <span className="cart-loyalty-rule">Redeems {Math.floor(points / 100) * 100} points at ₹50 per 100 pts</span>
+                      </div>
+                      <button
+                        type="button"
+                        className={`cart-loyalty-btn ${usePoints ? 'applied' : ''}`}
+                        onClick={() => setUsePoints(!usePoints)}
+                      >
+                        {usePoints ? 'Applied ✓' : 'Redeem'}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="cart-loyalty-progress-note">
+                      Earn {Math.floor(subtotal / 20)} points on this order. Reach 100 points to unlock ₹50 cashback discount.
+                    </div>
+                  )}
+                </div>
               )}
 
               <hr className="divider" />

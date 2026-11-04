@@ -74,21 +74,22 @@ export default function KitchenPage({ user, setUser, outlets, socketRef, onBack,
           <p className="kds-sub">FSSAI {outlet?.fssai} · {user.name} · {user.role}</p>
         </div>
         <div className="kds-actions">
-          {user.role === 'manager' && (
-            <div className="kds-outlet-tabs">
+          <div className="kds-outlet-select-wrap">
+            <span className="kds-select-label">SELECT KITCHEN ({outlets.length})</span>
+            <select
+              id="kds-outlet-select"
+              className="kds-outlet-dropdown"
+              value={outletId}
+              onChange={(e) => setOutletId(Number(e.target.value))}
+              aria-label="Select Kitchen Location"
+            >
               {outlets.map((o) => (
-                <button
-                  key={o.id}
-                  type="button"
-                  className={o.id === outletId ? 'kbtn' : 'kbtn kbtn-sec'}
-                  aria-pressed={o.id === outletId}
-                  onClick={() => setOutletId(o.id)}
-                >
+                <option key={o.id} value={o.id}>
                   {o.name}
-                </button>
+                </option>
               ))}
-            </div>
-          )}
+            </select>
+          </div>
           {onBack && <button className="kbtn kbtn-sec" onClick={onBack}>{backLabel || 'Back'}</button>}
           <button className="kbtn kbtn-sec" onClick={load}>Refresh</button>
           <button className="kbtn kbtn-sec" onClick={onSignOut ? onSignOut : () => { setToken(null); setUser(null); }}>Sign out</button>

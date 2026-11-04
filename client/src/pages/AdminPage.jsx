@@ -1,4 +1,4 @@
-// AdminPage.jsx — dashboard + menu CMS + party enquiries
+// AdminPage.jsx — Executive dashboard + menu CMS + 86-ing stock controls + party enquiries
 import { useState, useEffect, useRef } from 'react';
 import { api, fmt } from '../api.js';
 import { Err, VegMark } from '../components/Common.jsx';
@@ -15,6 +15,11 @@ const TabIcon = ({ name }) => {
       <path d="M4 6h16M4 10h16M4 14h16M4 18h16" />
     </svg>
   );
+  if (name === 'stock') return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+    </svg>
+  );
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -25,14 +30,14 @@ const TabIcon = ({ name }) => {
 function Dashboard({ dash }) {
   if (!dash) return null;
   const stats = [
-    { label: 'Orders · last 7 days', val: dash.today.orders },
-    { label: 'Revenue · last 7 days', val: fmt(dash.today.revenue) },
-    { label: 'Median prep', val: dash.today.medianPrep === null ? '—' : `${dash.today.medianPrep} min` },
+    { label: 'Orders (7 days)', val: dash.today.orders },
+    { label: 'Gross Revenue', val: fmt(dash.today.revenue) },
+    { label: 'Median Kitchen Prep', val: dash.today.medianPrep === null ? '—' : `${dash.today.medianPrep} min` },
     { label: 'Cancellations', val: dash.today.cancelled },
-    { label: 'Repeat customers', val: dash.repeatCustomers },
+    { label: 'Repeat Customers', val: dash.repeatCustomers },
   ];
   return (
-    <>
+    <div className="admin-content-pane">
       <div className="stat-grid">
         {stats.map((s) => (
           <div key={s.label} className="card stat-card">
@@ -42,8 +47,11 @@ function Dashboard({ dash }) {
         ))}
       </div>
 
-      <div className="card" style={{ marginBottom: 16 }}>
-        <h3 style={{ marginTop: 0 }}>By outlet — last 7 days</h3>
+      <div className="card" style={{ marginBottom: 20 }}>
+        <div className="row" style={{ marginBottom: 12 }}>
+          <h3 style={{ margin: 0, fontSize: 18 }}>Outlet Performance (17 Locations)</h3>
+          <span className="small muted">Past 7 days live telemetry</span>
+        </div>
         {dash.byOutlet.length === 0 ? (
           <p className="muted">No data yet.</p>
         ) : (
@@ -51,18 +59,23 @@ function Dashboard({ dash }) {
             <table className="table">
               <thead>
                 <tr>
-                  <th>Outlet</th><th>Orders</th><th>Revenue</th>
+                  <th>Outlet Location</th><th>Orders</th><th>Revenue</th>
                   <th>Median prep</th><th>Late now</th><th>Cancelled</th><th>Repeat</th>
                 </tr>
               </thead>
               <tbody>
                 {dash.byOutlet.map((r, i) => (
                   <tr key={i}>
-                    <td><strong>{r.name}</strong></td>
+                    <td>
+                      <strong>{r.name}</strong>
+                      {r.name.includes('Cloud Kitchen') && <span className="small muted" style={{ display: 'block' }}>Cloud Hub</span>}
+                    </td>
                     <td>{r.cnt}</td>
-                    <td>{fmt(r.rev)}</td>
+                    <td><strong>{fmt(r.rev)}</strong></td>
                     <td>{r.medianPrep === null ? '—' : `${r.medianPrep} min`}</td>
-                    <td style={{ color: r.lateCount > 0 ? '#C2410C' : undefined }}>{r.lateCount}</td>
+                    <td style={{ color: r.lateCount > 0 ? '#DC2626' : undefined, fontWeight: r.lateCount > 0 ? 700 : 400 }}>
+                      {r.lateCount}
+                    </td>
                     <td>{r.cancelled}</td>
                     <td>{r.repeatCustomers}</td>
                   </tr>
@@ -74,21 +87,26 @@ function Dashboard({ dash }) {
       </div>
 
       <div className="card">
-        <h3 style={{ marginTop: 0 }}>Late orders right now</h3>
+        <div className="row" style={{ marginBottom: 12 }}>
+          <h3 style={{ margin: 0, fontSize: 18 }}>Active Kitchen Alerts (Late Orders)</h3>
+          <span className="small" style={{ color: dash.lateOrders.length > 0 ? '#DC2626' : '#10B981', fontWeight: 600 }}>
+            {dash.lateOrders.length > 0 ? `⚠️ ${dash.lateOrders.length} Late order(s)` : '✓ All kitchens on schedule'}
+          </span>
+        </div>
         {dash.lateOrders.length === 0 ? (
-          <p className="muted">No late orders. All kitchens running on schedule.</p>
+          <p className="muted" style={{ margin: 0 }}>No late orders across any of the 17 Hyderabad kitchens.</p>
         ) : (
           <div className="table-scroll">
             <table className="table">
-              <thead><tr><th>Order</th><th>Outlet</th><th>Status</th><th>Late by</th><th>Amount</th></tr></thead>
+              <thead><tr><th>Order</th><th>Outlet</th><th>Status</th><th>Late by</th><th>Payable</th></tr></thead>
               <tbody>
                 {dash.lateOrders.map((o) => (
                   <tr key={o.id}>
-                    <td>{o.order_no}</td>
+                    <td><strong>#{o.order_no}</strong></td>
                     <td>{o.outlet_name}</td>
-                    <td>{o.status}</td>
-                    <td style={{ color: '#C2410C', fontWeight: 700 }}>{o.minutesLate} min</td>
-                    <td>{fmt(o.payable)}</td>
+                    <td><span className="status-badge live">{o.status}</span></td>
+                    <td style={{ color: '#DC2626', fontWeight: 700 }}>+{o.minutesLate} min</td>
+                    <td><strong>{fmt(o.payable)}</strong></td>
                   </tr>
                 ))}
               </tbody>
@@ -96,12 +114,11 @@ function Dashboard({ dash }) {
           </div>
         )}
       </div>
-      <p className="small muted" style={{ marginTop: 10 }}>All figures are from the live order table — not hardcoded.</p>
-    </>
+    </div>
   );
 }
 
-function MenuCMS({ outlets, items, err, onSaved }) {
+function MenuCMS({ outlets, items, onSaved }) {
   const formRef = useRef(null);
   const blankForm = () => ({
     name: '', category: 'Biryani', description: '', price: '',
@@ -113,6 +130,8 @@ function MenuCMS({ outlets, items, err, onSaved }) {
   const [form, setForm] = useState(blankForm);
   const [editing, setEditing] = useState(null);
   const [saveErr, setSaveErr] = useState('');
+  const [showOverrides, setShowOverrides] = useState(false);
+  const [cmsSearch, setCmsSearch] = useState('');
 
   const save = async (e) => {
     e.preventDefault(); setSaveErr('');
@@ -161,55 +180,67 @@ function MenuCMS({ outlets, items, err, onSaved }) {
     catch (e) { setSaveErr(e.message); }
   };
 
+  const filteredItems = items.filter((it) =>
+    it.name.toLowerCase().includes(cmsSearch.toLowerCase()) ||
+    it.category.toLowerCase().includes(cmsSearch.toLowerCase())
+  );
+
   return (
-    <>
+    <div className="admin-content-pane">
       {/* Add/Edit form */}
-      <form ref={formRef} onSubmit={save} className="card grid" style={{ marginBottom: 16 }}>
-        <h3 style={{ margin: '0 0 4px' }}>{editing ? 'Edit item' : 'Add a menu item'}</h3>
+      <form ref={formRef} onSubmit={save} className="card admin-form-card" style={{ marginBottom: 20 }}>
+        <div className="row" style={{ marginBottom: 12 }}>
+          <h3 style={{ margin: 0, fontSize: 18 }}>{editing ? 'Edit Menu Dish' : 'Add New Menu Item'}</h3>
+          {editing && (
+            <button type="button" className="btn btn-sec btn-sm" onClick={() => { setEditing(null); setForm(blankForm()); }}>
+              Cancel
+            </button>
+          )}
+        </div>
 
         <div className="form-grid-2">
           <div>
-            <label htmlFor="admin-name">Name</label>
-            <input id="admin-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+            <label htmlFor="admin-name">Dish Name</label>
+            <input id="admin-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Special Chicken Biryani" required />
           </div>
           <div>
             <label htmlFor="admin-category">Category</label>
-            <input id="admin-category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required />
+            <input id="admin-category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="e.g. Biryani, Desserts" required />
           </div>
           <div>
             <label htmlFor="admin-price">Price (₹, incl. 5% GST)</label>
-            <input id="admin-price" type="number" min="1" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} required />
+            <input id="admin-price" type="number" min="1" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="299" required />
           </div>
           <div>
-            <label htmlFor="admin-base">Base prep minutes</label>
-            <input id="admin-base" type="number" min="1" value={form.base_minutes} onChange={(e) => setForm({ ...form, base_minutes: e.target.value })} />
+            <label htmlFor="admin-base">Base Kitchen Minutes</label>
+            <input id="admin-base" type="number" min="1" value={form.base_minutes} onChange={(e) => setForm({ ...form, base_minutes: e.target.value })} placeholder="25" />
           </div>
         </div>
 
         <div>
           <label htmlFor="admin-desc">Description</label>
-          <input id="admin-desc" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+          <input id="admin-desc" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Authentic slow-cooked dum recipe..." />
         </div>
 
         <div className="form-grid-3">
           <div>
-            <label>Spice level</label>
+            <label>Spice Level</label>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {['Mild', 'Medium', 'Hot', 'Very Hot'].map((s) => (
-                <button key={s} type="button" className={`chip ${form.spice === s ? 'on' : ''}`} onClick={() => setForm({ ...form, spice: s })}>{s}</button>
+                <button key={s} type="button" className={`selectable-chip ${form.spice === s ? 'active' : ''}`} onClick={() => setForm({ ...form, spice: s })}>{s}</button>
               ))}
             </div>
           </div>
           <div>
-            <label>Menu timing</label>
+            <label>Menu Timing</label>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {['All day', 'Lunch', 'Dinner'].map((s) => (
-                <button key={s} type="button" className={`chip ${form.menu_tag === s ? 'on' : ''}`} onClick={() => setForm({ ...form, menu_tag: s })}>{s}</button>
+                <button key={s} type="button" className={`selectable-chip ${form.menu_tag === s ? 'active' : ''}`} onClick={() => setForm({ ...form, menu_tag: s })}>{s}</button>
               ))}
             </div>
           </div>
           <div>
-            <label>Type</label>
+            <label>Dietary Type</label>
             <div style={{ display: 'flex', gap: 6 }}>
               <button type="button" className={`category-filter-btn ${form.veg ? 'active' : ''}`} onClick={() => setForm({ ...form, veg: true })}>Veg</button>
               <button type="button" className={`category-filter-btn ${!form.veg ? 'active' : ''}`} onClick={() => setForm({ ...form, veg: false })}>Non-veg</button>
@@ -224,17 +255,16 @@ function MenuCMS({ outlets, items, err, onSaved }) {
           </div>
           <div>
             <label htmlFor="admin-photo">Photo URL</label>
-            <input id="admin-photo" value={form.photo} onChange={(e) => setForm({ ...form, photo: e.target.value })} placeholder="https://…" />
+            <input id="admin-photo" value={form.photo} onChange={(e) => setForm({ ...form, photo: e.target.value })} placeholder="https://images.unsplash.com/…" />
           </div>
         </div>
 
         {/* Portions */}
-        <div>
-          <label>Portions — leave empty for single-price item</label>
-          <p className="hint" style={{ marginTop: 0, marginBottom: 8 }}>Absolute prices per portion (e.g. Single ₹299, Family ₹900).</p>
+        <div className="admin-field-group">
+          <label>Portions (Optional — leave empty for single fixed price)</label>
           {(form.portions || []).map((pp, i) => (
             <div key={i} className="admin-row">
-              <input aria-label="Portion label" placeholder="e.g. Single" value={pp.label}
+              <input aria-label="Portion label" placeholder="Portion (e.g. Single / Family)" value={pp.label}
                 onChange={(e) => setForm({ ...form, portions: form.portions.map((x, j) => j === i ? { ...x, label: e.target.value } : x) })} />
               <input aria-label="Portion price" type="number" min="1" placeholder="Price ₹" value={pp.price}
                 onChange={(e) => setForm({ ...form, portions: form.portions.map((x, j) => j === i ? { ...x, price: e.target.value } : x) })} />
@@ -242,16 +272,16 @@ function MenuCMS({ outlets, items, err, onSaved }) {
             </div>
           ))}
           <button type="button" className="btn btn-sec btn-sm" onClick={() => setForm({ ...form, portions: [...(form.portions || []), { label: '', price: '' }] })}>
-            + Add portion
+            + Add Portion Tier
           </button>
         </div>
 
         {/* Add-ons */}
-        <div>
-          <label>Add-ons</label>
+        <div className="admin-field-group">
+          <label>Dish Add-ons (Optional)</label>
           {(form.addons || []).map((aa, i) => (
             <div key={i} className="admin-row">
-              <input aria-label="Add-on label" placeholder="e.g. Extra raita" value={aa.label}
+              <input aria-label="Add-on label" placeholder="Add-on (e.g. Extra raita)" value={aa.label}
                 onChange={(e) => setForm({ ...form, addons: form.addons.map((x, j) => j === i ? { ...x, label: e.target.value } : x) })} />
               <input aria-label="Add-on price" type="number" min="0" placeholder="Price ₹" value={aa.price}
                 onChange={(e) => setForm({ ...form, addons: form.addons.map((x, j) => j === i ? { ...x, price: e.target.value } : x) })} />
@@ -259,95 +289,209 @@ function MenuCMS({ outlets, items, err, onSaved }) {
             </div>
           ))}
           <button type="button" className="btn btn-sec btn-sm" onClick={() => setForm({ ...form, addons: [...(form.addons || []), { label: '', price: '' }] })}>
-            + Add add-on
+            + Add Optional Add-on
           </button>
         </div>
 
-        {/* Outlet prices */}
-        <div>
-          <label>Price by outlet (leave blank to use base price)</label>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 8 }}>
-            {outlets.map((o) => (
-              <div key={o.id}>
-                <label style={{ fontSize: 12, fontWeight: 500 }}>{o.name}</label>
-                <input type="number" min="1" placeholder={`Base ${fmt(form.price || 0)}`}
-                  value={form.outletPrices[o.id] ?? ''}
-                  onChange={(e) => setForm({ ...form, outletPrices: { ...form.outletPrices, [o.id]: e.target.value } })} />
-              </div>
-            ))}
+        {/* Available Outlets (17 Locations) */}
+        <div className="admin-field-group">
+          <div className="row" style={{ marginBottom: 6 }}>
+            <label style={{ margin: 0 }}>Available Kitchens ({form.outletIds.length} of {outlets.length} active)</label>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button type="button" className="btn btn-sec btn-sm" onClick={() => setForm({ ...form, outletIds: outlets.map((o) => o.id) })}>All</button>
+              <button type="button" className="btn btn-sec btn-sm" onClick={() => setForm({ ...form, outletIds: [] })}>None</button>
+            </div>
+          </div>
+          <div className="admin-outlets-chip-grid">
+            {outlets.map((o) => {
+              const active = form.outletIds.includes(o.id);
+              return (
+                <button
+                  key={o.id}
+                  type="button"
+                  className={`admin-outlet-toggle-chip ${active ? 'on' : ''}`}
+                  onClick={() => setForm({
+                    ...form,
+                    outletIds: active ? form.outletIds.filter((x) => x !== o.id) : [...form.outletIds, o.id],
+                  })}
+                >
+                  {o.name} {active ? '✓' : ''}
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* Available outlets */}
-        <div>
-          <label>Available at outlets</label>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {outlets.map((o) => (
-              <button key={o.id} type="button"
-                className={`chip ${form.outletIds.includes(o.id) ? 'on' : ''}`}
-                aria-pressed={form.outletIds.includes(o.id)}
-                onClick={() => setForm({
-                  ...form,
-                  outletIds: form.outletIds.includes(o.id)
-                    ? form.outletIds.filter((x) => x !== o.id)
-                    : [...form.outletIds, o.id],
-                })}>
-                {o.name}{form.outletIds.includes(o.id) ? ' ✓' : ''}
-              </button>
-            ))}
-          </div>
+        {/* Optional Price Overrides Collapsible */}
+        <div className="admin-field-group">
+          <button type="button" className="btn btn-sec btn-sm" onClick={() => setShowOverrides(!showOverrides)}>
+            {showOverrides ? 'Hide Outlet Price Overrides' : `Customize Prices by Outlet (${outlets.length} locations) ↓`}
+          </button>
+          {showOverrides && (
+            <div className="admin-overrides-grid" style={{ marginTop: 10 }}>
+              {outlets.map((o) => (
+                <div key={o.id} className="admin-override-cell">
+                  <span className="small muted" style={{ display: 'block' }}>{o.name}</span>
+                  <input
+                    type="number"
+                    min="1"
+                    placeholder={`Base ₹${form.price || 0}`}
+                    value={form.outletPrices[o.id] ?? ''}
+                    onChange={(e) => setForm({ ...form, outletPrices: { ...form.outletPrices, [o.id]: e.target.value } })}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {saveErr && <div className="banner err">{saveErr}</div>}
 
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn">{editing ? 'Save changes' : 'Add item'}</button>
-          {editing && <button type="button" className="btn btn-sec" onClick={() => { setEditing(null); setForm(blankForm()); }}>Cancel</button>}
-        </div>
+        <button className="btn" style={{ minHeight: 44, fontSize: 15 }}>
+          {editing ? 'Save Dish Changes' : 'Create Menu Item'}
+        </button>
       </form>
 
-      {/* Items table */}
-      {items.length === 0 ? (
-        <div className="card"><p className="muted">No menu items yet — add one above.</p></div>
-      ) : (
-        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <div className="table-scroll">
-            <table className="table">
-              <thead>
-                <tr><th>Item</th><th>Price</th><th>Tag</th><th>Status</th><th></th></tr>
-              </thead>
-              <tbody>
-                {items.map((it) => (
+      {/* Catalog Table */}
+      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+        <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--line)', display: 'flex', gap: 12, alignItems: 'center' }}>
+          <input
+            placeholder="Search items by name or category…"
+            value={cmsSearch}
+            onChange={(e) => setCmsSearch(e.target.value)}
+            style={{ maxWidth: 360 }}
+          />
+          <span className="small muted">Showing {filteredItems.length} of {items.length} items</span>
+        </div>
+
+        <div className="table-scroll">
+          <table className="table">
+            <thead>
+              <tr><th>Item</th><th>Price</th><th>Timing</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+              {filteredItems.map((it) => (
+                <tr key={it.id}>
+                  <td>
+                    <VegMark veg={it.veg} /> <strong>{it.name}</strong>
+                    <div className="small muted">
+                      {it.category} · {it.spice} · {it.base_minutes}m
+                      {it.portions?.length ? ` · ${it.portions.length} sizes` : ''}
+                      {it.addons?.length ? ` · ${it.addons.length} add-ons` : ''}
+                    </div>
+                  </td>
+                  <td><strong>{fmt(it.price)}</strong></td>
+                  <td><span className="small chip">{it.menu_tag}</span></td>
+                  <td>
+                    <span style={{ color: it.active ? '#10B981' : '#6B7280', fontWeight: 600, fontSize: 13 }}>
+                      {it.active ? '● Live' : '○ Paused'}
+                    </span>
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button className="btn btn-sec btn-sm" onClick={() => startEdit(it)}>Edit</button>
+                      <button className="btn btn-sec btn-sm" onClick={() => toggleActive(it)}>{it.active ? 'Pause' : 'Resume'}</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StockControl({ outlets, items, onUpdated }) {
+  const [selectedOutletId, setSelectedOutletId] = useState(outlets[0]?.id || 1);
+  const [busyItem, setBusyItem] = useState(null);
+
+  const outlet = outlets.find((o) => o.id === selectedOutletId) || outlets[0];
+
+  const toggleStock = async (item, currentOos) => {
+    setBusyItem(item.id);
+    try {
+      await api(`/api/kitchen/items/${item.id}/outlet/${selectedOutletId}/pause`, {
+        method: 'PATCH',
+        body: { outOfStock: !currentOos },
+      });
+      onUpdated();
+    } catch {} finally { setBusyItem(null); }
+  };
+
+  return (
+    <div className="admin-content-pane">
+      <div className="card" style={{ marginBottom: 16 }}>
+        <div className="row" style={{ alignItems: 'flex-start' }}>
+          <div>
+            <div className="eyebrow" style={{ color: '#F59E0B' }}>86-ING &amp; PAUSE DISHES</div>
+            <h2 className="serif" style={{ fontSize: 24, margin: '4px 0 2px' }}>Live Outlet Stock Management</h2>
+            <p className="small muted" style={{ margin: 0 }}>
+              Instantly 86 dishes when ingredients run low. Changes broadcast live to customer apps &amp; KDS immediately.
+            </p>
+          </div>
+          <div style={{ minWidth: 220 }}>
+            <label style={{ fontSize: 12, fontWeight: 600 }}>SELECT LOCATION</label>
+            <select
+              value={selectedOutletId}
+              onChange={(e) => setSelectedOutletId(Number(e.target.value))}
+            >
+              {outlets.map((o) => (
+                <option key={o.id} value={o.id}>{o.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+        <div className="table-scroll">
+          <table className="table">
+            <thead>
+              <tr><th>Dish</th><th>Category</th><th>Current Status at {outlet?.name}</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+              {items.map((it) => {
+                const outletInfo = (it.outlets || []).find((o) => o.outlet_id === selectedOutletId);
+                const isOutOfStock = outletInfo ? !!outletInfo.out_of_stock : false;
+                return (
                   <tr key={it.id}>
                     <td>
                       <VegMark veg={it.veg} /> <strong>{it.name}</strong>
-                      <div className="small muted">
-                        {it.category} · {it.spice}
-                        {it.portions?.length ? ` · ${it.portions.length} portion${it.portions.length > 1 ? 's' : ''}` : ''}
-                        {it.addons?.length ? ` · ${it.addons.length} add-on${it.addons.length > 1 ? 's' : ''}` : ''}
-                      </div>
                     </td>
-                    <td>{fmt(it.price)}</td>
-                    <td>{it.menu_tag}</td>
+                    <td><span className="small chip">{it.category}</span></td>
                     <td>
-                      <span style={{ color: it.active ? '#1A7F37' : '#6B6B6B', fontWeight: 600 }}>
-                        {it.active ? '● Live' : '○ Paused'}
+                      <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        fontWeight: 700,
+                        fontSize: 12.5,
+                        color: isOutOfStock ? '#DC2626' : '#10B981',
+                      }}>
+                        {isOutOfStock ? '🔴 OUT OF STOCK (86\'d)' : '🟢 READY TO SERVE'}
                       </span>
                     </td>
                     <td>
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        <button className="btn btn-sec btn-sm" onClick={() => startEdit(it)}>Edit</button>
-                        <button className="btn btn-sec btn-sm" onClick={() => toggleActive(it)}>{it.active ? 'Pause' : 'Restore'}</button>
-                      </div>
+                      <button
+                        type="button"
+                        className={`btn btn-sm ${isOutOfStock ? 'btn-primary' : 'btn-sec'}`}
+                        disabled={busyItem === it.id}
+                        onClick={() => toggleStock(it, isOutOfStock)}
+                        style={{ minWidth: 120 }}
+                      >
+                        {isOutOfStock ? 'Mark Available' : '86 Dish (Pause)'}
+                      </button>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
-      )}
-    </>
+      </div>
+    </div>
   );
 }
 
@@ -373,30 +517,34 @@ function PartyEnquiries({ parties, onUpdate }) {
       <div className="table-scroll">
         <table className="table">
           <thead>
-            <tr><th>Contact</th><th>Outlet</th><th>When</th><th>Guests</th><th>Status</th><th>Actions</th></tr>
+            <tr><th>Contact</th><th>Preferred Hub</th><th>Date &amp; Time</th><th>Guests</th><th>Status</th><th>Catering Manager Action</th></tr>
           </thead>
           <tbody>
             {parties.map((pp) => (
               <tr key={pp.id}>
                 <td>
                   <strong>{pp.name}</strong>
-                  <div className="small muted">{pp.phone}</div>
-                  {pp.notes && <div className="small muted" style={{ marginTop: 2 }}>{pp.notes}</div>}
-                  {pp.manager_note && <div className="small" style={{ color: '#1A7F37', marginTop: 2 }}>Note: {pp.manager_note}</div>}
+                  <div className="small muted">📞 +91 {pp.phone}</div>
+                  {pp.notes && <div className="small muted" style={{ marginTop: 2 }}>Note: {pp.notes}</div>}
+                  {pp.manager_note && <div className="small" style={{ color: '#10B981', marginTop: 2, fontWeight: 600 }}>Catering Note: {pp.manager_note}</div>}
                 </td>
-                <td>{pp.outlet_name}</td>
+                <td><strong>{pp.outlet_name}</strong></td>
                 <td>{new Date(pp.event_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}</td>
-                <td>{pp.guests}</td>
-                <td><span className="chip" style={{ fontSize: 12, padding: '4px 8px' }}>{pp.status}</span></td>
+                <td><strong>{pp.guests} people</strong></td>
                 <td>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 160 }}>
+                  <span className={`status-badge ${pp.status === 'Confirmed' ? 'live' : ''}`}>
+                    {pp.status}
+                  </span>
+                </td>
+                <td>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 180 }}>
                     <input
-                      placeholder="Manager note (optional)"
+                      placeholder="Manager confirmation note…"
                       value={noteInputs[pp.id] || ''}
                       onChange={(e) => setNoteInputs({ ...noteInputs, [pp.id]: e.target.value })}
-                      style={{ fontSize: 13, padding: '6px 8px', minHeight: 'auto' }}
+                      style={{ fontSize: 12.5, padding: '6px 8px', minHeight: 'auto' }}
                     />
-                    <div style={{ display: 'flex', gap: 4 }}>
+                    <div style={{ display: 'flex', gap: 6 }}>
                       <button className="btn btn-sm" disabled={busy[pp.id]} style={{ flex: 1, fontSize: 12 }}
                         onClick={() => updateParty(pp.id, 'Confirmed', noteInputs[pp.id])}>
                         Confirm
@@ -438,20 +586,28 @@ export default function AdminPage({ outlets }) {
 
   const tabs = [
     { key: 'dashboard', label: 'Dashboard' },
-    { key: 'menu', label: 'Menu CMS' },
-    { key: 'party', label: `Party (${parties.length})` },
+    { key: 'menu', label: `Menu CMS (${items.length})` },
+    { key: 'stock', label: '86-ing Stock' },
+    { key: 'party', label: `Party Orders (${parties.length})` },
   ];
 
   return (
-    <section style={{ marginTop: 24 }}>
-      <div className="eyebrow">Central menu · Admin</div>
-      <h1 className="serif" style={{ fontSize: 36, margin: '8px 0 20px' }}>Run the house.</h1>
+    <section className="admin-page-container">
+      <div className="admin-page-header">
+        <div>
+          <div className="eyebrow">CENTRAL OPERATIONS · 17 HYDERABAD LOCATIONS</div>
+          <h1 className="serif" style={{ fontSize: 36, margin: '4px 0 2px' }}>Run the house.</h1>
+          <p className="muted" style={{ margin: 0, fontSize: 14 }}>
+            Direct ordering metrics, central menu catalog, 86-ing stock controls, and party catering management.
+          </p>
+        </div>
+      </div>
 
       <Err msg={err} retry={load} />
 
       <div className="admin-layout">
-        {/* Sidebar tabs */}
-        <div className="admin-sidebar">
+        {/* Responsive navigation bar: Sidebar on Laptop / Sticky Tab Bar on Mobile */}
+        <nav className="admin-sidebar" aria-label="Admin Navigation">
           {tabs.map((t) => (
             <button
               key={t.key}
@@ -459,13 +615,13 @@ export default function AdminPage({ outlets }) {
               onClick={() => setTab(t.key)}
             >
               <TabIcon name={t.key} />
-              {t.label}
+              <span>{t.label}</span>
             </button>
           ))}
-        </div>
+        </nav>
 
-        {/* Content */}
-        <div>
+        {/* Dynamic Content */}
+        <div className="admin-main-view">
           {loading && !dash && (
             <div className="card"><div className="skeleton" style={{ height: 24, width: '50%' }} /></div>
           )}
@@ -473,7 +629,11 @@ export default function AdminPage({ outlets }) {
           {tab === 'dashboard' && dash && <Dashboard dash={dash} />}
 
           {tab === 'menu' && (
-            <MenuCMS outlets={outlets} items={items} err={err} onSaved={load} />
+            <MenuCMS outlets={outlets} items={items} onSaved={load} />
+          )}
+
+          {tab === 'stock' && (
+            <StockControl outlets={outlets} items={items} onUpdated={load} />
           )}
 
           {tab === 'party' && (

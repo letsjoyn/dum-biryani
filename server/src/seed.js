@@ -30,15 +30,45 @@ const BIRYANI_ADDONS = JSON.stringify([
 
 function seed() {
   const count = db.prepare('SELECT COUNT(*) c FROM outlets').get().c;
-  if (count > 0) { console.log('Seed skipped: data already exists.'); return; }
+  if (count >= 17) { console.log('Seed skipped: data already exists.'); return; }
+  if (count > 0 && count < 17) {
+    // Reset database to ensure full 14 outlets + 3 cloud kitchens
+    db.exec(`
+      DELETE FROM points_ledger;
+      DELETE FROM notifications;
+      DELETE FROM order_events;
+      DELETE FROM order_items;
+      DELETE FROM orders;
+      DELETE FROM party_enquiries;
+      DELETE FROM item_outlets;
+      DELETE FROM items;
+      DELETE FROM coupons;
+      DELETE FROM users;
+      DELETE FROM outlets;
+    `);
+  }
   const hash = bcrypt.hashSync('Demo123!', 10);
-  // lat/lon are approximate outlet locations used for the delivery-area
-  // distance calculation (haversine, in the client). All outlets are Hyderabad.
+  // All 14 outlets + 3 cloud kitchens across Hyderabad as per problem statement
   const outlets = [
-    ['Kondapur', 'Plot 42, Botanical Garden Road, Kondapur, Hyderabad 500084', '040-4855-1201', '10124012001234', 35, 8, 17.461, 78.342],
-    ['Gachibowli Cloud Kitchen', 'Financial District, Nanakramguda, Gachibowli, Hyderabad 500032', '040-4855-1202', '10124012001235', 30, 10, 17.440, 78.350],
-    ['Kukatpally', 'Main Road, Kukatpally, Hyderabad 500072', '040-4855-1203', '10124012001236', 35, 8, 17.484, 78.408],
-    ['Banjara Hills', 'Road No. 12, Banjara Hills, Hyderabad 500034', '040-4855-1204', '10124012001237', 30, 6, 17.415, 78.437],
+    // 14 Outlets
+    ['Kondapur', 'Plot 42, Botanical Garden Road, Kondapur, Hyderabad 500084', '040-4855-1201', '10124012001201', 35, 8, 17.461, 78.342],
+    ['Kukatpally', 'Main Road, Phase 1, KPHB Colony, Kukatpally, Hyderabad 500072', '040-4855-1202', '10124012001202', 35, 8, 17.484, 78.408],
+    ['Banjara Hills', 'Road No. 12, Banjara Hills, Hyderabad 500034', '040-4855-1203', '10124012001203', 30, 6, 17.415, 78.437],
+    ['Jubilee Hills', 'Road No. 36, Jubilee Hills, Hyderabad 500033', '040-4855-1204', '10124012001204', 30, 6, 17.432, 78.407],
+    ['HITEC City', 'Cyber Towers Road, Patrika Nagar, HITEC City, Hyderabad 500081', '040-4855-1205', '10124012001205', 30, 7, 17.443, 78.381],
+    ['Madhapur', '100 Feet Road, Ayyappa Society, Madhapur, Hyderabad 500081', '040-4855-1206', '10124012001206', 30, 7, 17.448, 78.389],
+    ['Gachibowli', 'Near Outer Ring Road, Gachibowli, Hyderabad 500032', '040-4855-1207', '10124012001207', 30, 8, 17.440, 78.350],
+    ['Begumpet', 'Sardar Patel Road, Begumpet, Hyderabad 500016', '040-4855-1208', '10124012001208', 30, 7, 17.440, 78.460],
+    ['Secunderabad', 'MG Road, Paradise Circle, Secunderabad 500003', '040-4855-1209', '10124012001209', 35, 8, 17.440, 78.500],
+    ['Miyapur', 'Allwyn X Road, Miyapur, Hyderabad 500049', '040-4855-1210', '10124012001210', 30, 8, 17.496, 78.361],
+    ['Manikonda', 'Puppalaguda Main Road, Manikonda, Hyderabad 500089', '040-4855-1211', '10124012001211', 30, 7, 17.420, 78.367],
+    ['Dilsukhnagar', 'Main Road, Near Metro Pillar 1520, Dilsukhnagar, Hyderabad 500060', '040-4855-1212', '10124012001212', 35, 8, 17.368, 78.524],
+    ['Ameerpet', 'Satyam Theatre Road, Ameerpet, Hyderabad 500016', '040-4855-1213', '10124012001213', 30, 7, 17.437, 78.448],
+    ['Tolichowki', 'Rethi Bowli, Mehdipatnam-Tolichowki Road, Hyderabad 500008', '040-4855-1214', '10124012001214', 30, 7, 17.399, 78.418],
+    // 3 Cloud Kitchens
+    ['Gachibowli Cloud Kitchen', 'Financial District, Nanakramguda, Gachibowli, Hyderabad 500032', '040-4855-1215', '10124012001215', 30, 10, 17.425, 78.340],
+    ['Madhapur Cloud Kitchen', 'Kavuri Hills, Phase 2, Madhapur, Hyderabad 500081', '040-4855-1216', '10124012001216', 30, 9, 17.445, 78.395],
+    ['Kukatpally Cloud Kitchen', 'Pragati Nagar Road, Kukatpally, Hyderabad 500090', '040-4855-1217', '10124012001217', 30, 9, 17.502, 78.390],
   ];
   const outletIds = outlets.map((o) => db.prepare(
     'INSERT INTO outlets (name,address,phone,fssai,min_prep_minutes,delivery_radius_km,lat,lon) VALUES (?,?,?,?,?,?,?,?)').run(...o).lastInsertRowid);
@@ -83,7 +113,7 @@ function seed() {
     outletIds.forEach((oid) => db.prepare('INSERT INTO item_outlets (item_id,outlet_id,out_of_stock) VALUES (?,?,0)').run(id, oid));
   });
   // One realistic gap: Mango Lassi out of stock at Kukatpally, to demo the pause.
-  db.prepare('UPDATE item_outlets SET out_of_stock=1 WHERE item_id=? AND outlet_id=?').run(itemIds['Mango Lassi'], outletIds[2]);
+  db.prepare('UPDATE item_outlets SET out_of_stock=1 WHERE item_id=? AND outlet_id=?').run(itemIds['Mango Lassi'], outletIds[1]);
 
   db.prepare("INSERT INTO coupons VALUES ('DIRECT10','percent',10,0,'10% off direct orders')").run();
   db.prepare("INSERT INTO coupons VALUES ('WELCOME100','flat',100,499,'Rs 100 off on orders above Rs 499')").run();
@@ -115,12 +145,12 @@ function seed() {
   };
   // Brief sample orders, priced to match exactly.
   mkOrder('WEB-778120', 0, 'Preparing', [['Chicken Dum Biryani', 'Family (serves 4)', 1, 900], ['Double ka Meetha', '', 2, 140]], 1180, 1180, 'UPI', 45, 45, 45);
-  mkOrder('WEB-778131', 1, 'Ready', [['Veg Biryani', 'Single', 2, 260], ['Mirchi ka Salan', '', 1, 120]], 640, 640, 'Card', 70, 40, 40);
-  mkOrder('WEB-778146', 2, 'Preparing', [['Mutton Haleem', '', 3, 350]], 1050, 1050, 'UPI', 55, -15, 40); // promised 15 min ago => Late
+  mkOrder('WEB-778131', 14, 'Ready', [['Veg Biryani', 'Single', 2, 260], ['Mirchi ka Salan', '', 1, 120]], 640, 640, 'Card', 70, 40, 40);
+  mkOrder('WEB-778146', 1, 'Preparing', [['Mutton Haleem', '', 3, 350]], 1050, 1050, 'UPI', 55, -15, 40); // promised 15 min ago => Late
   // A couple of extra completed orders so the dashboard + reorder list feel real.
   mkOrder('WEB-778100', 0, 'Handed over', [['Mutton Dum Biryani', 'Single', 1, 349], ['Raita', '', 1, 49]], 398, 398, 'UPI', 300, 35, 35);
-  mkOrder('WEB-778090', 3, 'Handed over', [['Chicken Dum Biryani', 'Single', 2, 299], ['Chicken 65', '', 1, 279]], 877, 877, 'Card', 1500, 40, 40);
-  console.log('Seed complete: 4 outlets, 18 items, 3 demo users, 5 orders, 2 coupons.');
+  mkOrder('WEB-778090', 2, 'Handed over', [['Chicken Dum Biryani', 'Single', 2, 299], ['Chicken 65', '', 1, 279]], 877, 877, 'Card', 1500, 40, 40);
+  console.log('Seed complete: 17 locations (14 outlets + 3 cloud kitchens), 18 items, 3 demo users, 5 orders, 2 coupons.');
 }
 
 if (require.main === module) seed();

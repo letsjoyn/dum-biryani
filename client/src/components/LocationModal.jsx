@@ -2,10 +2,24 @@
 import { useState, useEffect } from 'react';
 
 const AREAS = [
-  ['Kondapur', 17.461, 78.342], ['Gachibowli', 17.440, 78.350], ['Madhapur', 17.448, 78.389],
-  ['HITEC City', 17.443, 78.381], ['Manikonda', 17.420, 78.367], ['Miyapur', 17.496, 78.361],
-  ['Kukatpally', 17.484, 78.408], ['Jubilee Hills', 17.432, 78.407], ['Banjara Hills', 17.415, 78.437],
-  ['Begumpet', 17.440, 78.460], ['Secunderabad', 17.440, 78.500], ['Uppal', 17.398, 78.558],
+  ['Kondapur', 17.461, 78.342],
+  ['Kukatpally', 17.484, 78.408],
+  ['Banjara Hills', 17.415, 78.437],
+  ['Jubilee Hills', 17.432, 78.407],
+  ['HITEC City', 17.443, 78.381],
+  ['Madhapur', 17.448, 78.389],
+  ['Gachibowli', 17.440, 78.350],
+  ['Begumpet', 17.440, 78.460],
+  ['Secunderabad', 17.440, 78.500],
+  ['Miyapur', 17.496, 78.361],
+  ['Manikonda', 17.420, 78.367],
+  ['Dilsukhnagar', 17.368, 78.524],
+  ['Ameerpet', 17.437, 78.448],
+  ['Tolichowki', 17.399, 78.418],
+  ['Uppal', 17.398, 78.558],
+  ['Financial District', 17.425, 78.340],
+  ['Kavuri Hills', 17.445, 78.395],
+  ['Pragati Nagar', 17.502, 78.390],
 ];
 
 function haversineKm(aLat, aLon, bLat, bLon) {

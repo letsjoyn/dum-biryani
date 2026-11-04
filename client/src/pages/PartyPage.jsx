@@ -1,4 +1,4 @@
-// PartyPage.jsx — bulk & party order form with clean spacing & modern cards
+// PartyPage.jsx — 1-Page non-scrollable workspace on desktop + sleek responsive flow on mobile
 import { useState, useEffect } from 'react';
 import { api } from '../api.js';
 import { Err } from '../components/Common.jsx';
@@ -32,7 +32,7 @@ export default function PartyPage({ user, outlets, goLogin }) {
   const [form, setForm] = useState({
     name: saved?.name || user?.name || '',
     phone: saved?.phone || '',
-    outletId: saved?.outletId || 1,
+    outletId: saved?.outletId || (outlets[0]?.id || 1),
     guests: saved?.guests || 30,
     notes: saved?.notes || '',
   });
@@ -71,7 +71,7 @@ export default function PartyPage({ user, outlets, goLogin }) {
         },
       });
       try { localStorage.removeItem('dh_party'); } catch {}
-      setOk(`Party enquiry #${p.id} submitted — the catering manager will confirm.`);
+      setOk(`Party enquiry #${p.id} submitted! Our catering manager will contact you at +91 ${digits} to confirm your order.`);
     } catch (e2) { setErr(e2.message); } finally { setBusy(false); }
   };
 
@@ -80,167 +80,220 @@ export default function PartyPage({ user, outlets, goLogin }) {
   const dayLabel = (iso) =>
     new Date(iso + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
 
+  const selectedOutlet = outlets.find((o) => o.id === Number(form.outletId)) || outlets[0];
+
   return (
-    <section className="party-form-wrap" style={{ maxWidth: 640, margin: '32px auto' }}>
-      {!user && (
-        <div className="banner info" style={{ marginBottom: 16 }}>
-          Sign in to submit a party enquiry — you can fill the form first, and your progress is saved.
-          <button className="btn btn-sec btn-sm" style={{ marginLeft: 10 }} onClick={goLogin}>Sign in</button>
-        </div>
-      )}
-
-      <div className="eyebrow">Bulk & Party Orders</div>
-      <h1 className="serif" style={{ fontSize: 40, margin: '8px 0 6px' }}>Feed the whole party.</h1>
-      <p className="muted" style={{ marginBottom: 24, fontSize: 15 }}>
-        Party orders need at least 48 hours notice. Guaranteed on-time delivery with live catering manager confirmation.
-      </p>
-
-      <form onSubmit={submit} className="card grid" style={{ padding: 24 }} noValidate>
-        {/* Contact */}
-        <div className="form-section">
-          <h3>1. Contact Details</h3>
-          <div className="form-grid-2">
-            <div>
-              <label htmlFor="party-name">Your name</label>
-              <input
-                id="party-name"
-                value={form.name}
-                onChange={(e) => set('name', e.target.value)}
-                placeholder="e.g. Priya Sharma"
-                required
-              />
-            </div>
-            <div>
-              <label htmlFor="party-phone">Phone number</label>
-              <div className="phone-input">
-                <span>+91</span>
-                <input
-                  id="party-phone"
-                  inputMode="tel"
-                  value={form.phone}
-                  onChange={(e) => { set('phone', e.target.value.replace(/[^\d ]/g, '')); setPhoneErr(''); }}
-                  placeholder="98765 43210"
-                  required
-                />
-              </div>
-              {phoneErr
-                ? <p className="small" style={{ color: '#8A2C10', marginTop: 4 }}>{phoneErr}</p>
-                : <p className="hint">We'll call this number to confirm details.</p>
-              }
-            </div>
-          </div>
-        </div>
-
-        <hr className="divider" />
-
-        {/* Outlet */}
-        <div className="form-section">
-          <h3>2. Preferred Outlet</h3>
-          <div className="party-outlets-grid">
-            {outlets.map((o) => (
-              <button
-                key={o.id}
-                type="button"
-                className={`party-outlet-card ${Number(form.outletId) === o.id ? 'active' : ''}`}
-                onClick={() => set('outletId', o.id)}
-                aria-pressed={Number(form.outletId) === o.id}
-              >
-                <div className="row">
-                  <strong style={{ fontSize: 14 }}>{o.name}</strong>
-                  {Number(form.outletId) === o.id && <span className="badge-selected">Selected</span>}
-                </div>
-                <span className="small muted" style={{ display: 'block', marginTop: 3 }}>FSSAI: {o.fssai}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <hr className="divider" />
-
-        {/* Guests */}
-        <div className="form-section">
-          <h3>3. Number of Guests</h3>
-          <div className="stepper" style={{ marginBottom: 12 }}>
-            <button type="button" aria-label="Fewer guests" onClick={() => set('guests', clampGuests(form.guests - 10))}>−</button>
-            <strong style={{ fontSize: 20 }}>{form.guests}</strong>
-            <button type="button" aria-label="More guests" onClick={() => set('guests', clampGuests(form.guests + 10))}>+</button>
-          </div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {[10, 20, 50, 100].map((g) => (
-              <button
-                key={g}
-                type="button"
-                className={`selectable-chip ${form.guests === g ? 'active' : ''}`}
-                onClick={() => set('guests', g)}
-              >
-                {g === 100 ? '100+ guests' : `${g} guests`}
-              </button>
-            ))}
-          </div>
-          <p className="hint" style={{ marginTop: 8 }}>Minimum 10 guests, up to 500 guests.</p>
-        </div>
-
-        <hr className="divider" />
-
-        {/* When */}
-        <div className="form-section">
-          <h3>4. Event Date & Time Slot</h3>
-          <div style={{ marginBottom: 14 }}>
-            <div className="eyebrow" style={{ marginBottom: 8 }}>Select Date (Earliest: 48h notice)</div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {validDays().map((d) => (
-                <button
-                  key={d}
-                  type="button"
-                  className={`selectable-chip ${partyDate === d ? 'active' : ''}`}
-                  onClick={() => setPartyDate(d)}
-                >
-                  {dayLabel(d)}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <div className="eyebrow" style={{ marginBottom: 8 }}>Select Delivery Time Slot</div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {TIME_SLOTS.map(([v, l]) => (
-                <button
-                  key={v}
-                  type="button"
-                  className={`selectable-chip ${partyTime === v ? 'active' : ''}`}
-                  onClick={() => setPartyTime(v)}
-                >
-                  {l}
-                </button>
-              ))}
-            </div>
-            <p className="hint" style={{ marginTop: 8 }}>
-              Booking for: <strong>{dayLabel(partyDate)} at {TIME_SLOTS.find(([v]) => v === partyTime)?.[1]}</strong>
+    <div className="party-workspace-wrap">
+      <div className="party-split-view">
+        {/* ── LEFT PANE: Overview & Summary Preview ── */}
+        <aside className="party-sidebar-pane">
+          <div className="party-sidebar-header">
+            <span className="party-badge">HYDERABAD CATERING</span>
+            <h1 className="party-hero-title">Feed the <i>whole party.</i></h1>
+            <p className="party-hero-desc">
+              Authentic dum-cooked biryanis and slow-cooked haleem delivered hot in sealed handis.
+              Direct kitchen routing with catering manager confirmation.
             </p>
           </div>
-        </div>
 
-        <hr className="divider" />
+          <div className="party-preview-card">
+            <div className="eyebrow" style={{ color: '#F59E0B', marginBottom: 10 }}>LIVE BOOKING PREVIEW</div>
+            
+            <div className="party-preview-row">
+              <span className="party-preview-label">Guests</span>
+              <strong className="party-preview-val">{form.guests} people</strong>
+            </div>
 
-        {/* Notes */}
-        <div className="form-section">
-          <h3>5. Additional Notes & Venue Details</h3>
-          <textarea
-            id="party-notes"
-            rows={3}
-            value={form.notes}
-            onChange={(e) => set('notes', e.target.value)}
-            placeholder="E.g. 15 Veg, 35 Chicken Dum Biryani, exact venue delivery directions…"
-          />
-        </div>
+            <div className="party-preview-row">
+              <span className="party-preview-label">Date &amp; Time</span>
+              <strong className="party-preview-val">{dayLabel(partyDate)} · {TIME_SLOTS.find(([v]) => v === partyTime)?.[1]}</strong>
+            </div>
 
-        <Err msg={err} />
-        {ok && <div className="banner ok">{ok}</div>}
+            <div className="party-preview-row">
+              <span className="party-preview-label">Kitchen Hub</span>
+              <strong className="party-preview-val">{selectedOutlet?.name || 'Kondapur'}</strong>
+            </div>
 
-        <button className="btn btn-full" disabled={busy} style={{ minHeight: 46, fontSize: 15 }}>
-          {busy ? 'Saving…' : user ? 'Submit Party Enquiry' : 'Sign in to Submit Enquiry'}
-        </button>
-      </form>
-    </section>
+            <div className="party-preview-row">
+              <span className="party-preview-label">FSSAI Licence</span>
+              <span className="party-preview-val">{selectedOutlet?.fssai || '10124012001201'}</span>
+            </div>
+
+            <div className="party-preview-row">
+              <span className="party-preview-label">Customer</span>
+              <span className="party-preview-val">{form.name || user?.name || 'Guest'}</span>
+            </div>
+
+            <div className="party-policy-note">
+              ✓ Minimum 48 hours notice strictly observed<br />
+              ✓ FSSAI certified kitchen &amp; tamper-proof seal<br />
+              ✓ DPDP Act 2023 compliant data protection
+            </div>
+          </div>
+
+          {!user && (
+            <div className="party-guest-login-card">
+              <span>Ordering for a corporate event or wedding?</span>
+              <button type="button" className="btn btn-sec btn-sm" onClick={goLogin}>
+                Sign In to Auto-Fill
+              </button>
+            </div>
+          )}
+        </aside>
+
+        {/* ── RIGHT PANE: Compact Executive Form ── */}
+        <main className="party-form-pane">
+          <form onSubmit={submit} className="party-form-card" noValidate>
+            <div className="party-form-grid">
+              {/* 1. Contact Info */}
+              <div className="party-section-card">
+                <div className="party-section-title">
+                  <span className="party-step-num">1</span>
+                  <strong>Contact Information</strong>
+                </div>
+                <div className="form-grid-2">
+                  <div>
+                    <label htmlFor="party-name">Full name</label>
+                    <input
+                      id="party-name"
+                      value={form.name}
+                      onChange={(e) => set('name', e.target.value)}
+                      placeholder="e.g. Priya Sharma"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="party-phone">Mobile number</label>
+                    <div className="phone-input">
+                      <span>+91</span>
+                      <input
+                        id="party-phone"
+                        inputMode="tel"
+                        value={form.phone}
+                        onChange={(e) => { set('phone', e.target.value.replace(/[^\d ]/g, '')); setPhoneErr(''); }}
+                        placeholder="98765 43210"
+                        required
+                      />
+                    </div>
+                    {phoneErr && <p className="small" style={{ color: '#DC2626', marginTop: 4 }}>{phoneErr}</p>}
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. Kitchen & Guests */}
+              <div className="party-section-card">
+                <div className="party-section-title">
+                  <span className="party-step-num">2</span>
+                  <strong>Catering Kitchen &amp; Guest Count</strong>
+                </div>
+                <div className="form-grid-2">
+                  <div>
+                    <label htmlFor="party-outlet">Select from 17 Kitchens</label>
+                    <select
+                      id="party-outlet"
+                      value={form.outletId}
+                      onChange={(e) => set('outletId', Number(e.target.value))}
+                    >
+                      {outlets.map((o) => (
+                        <option key={o.id} value={o.id}>
+                          {o.name} {o.name.includes('Cloud Kitchen') ? '(Cloud Hub)' : '(Outlet)'}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label>Number of guests: <strong>{form.guests}</strong></label>
+                    <div className="party-guests-ctrl-row">
+                      <div className="party-stepper-box">
+                        <button type="button" onClick={() => set('guests', clampGuests(form.guests - 10))}>−</button>
+                        <span>{form.guests}</span>
+                        <button type="button" onClick={() => set('guests', clampGuests(form.guests + 10))}>+</button>
+                      </div>
+                      <div className="party-quick-chips">
+                        {[20, 50, 100, 200].map((g) => (
+                          <button
+                            key={g}
+                            type="button"
+                            className={`party-chip-btn ${form.guests === g ? 'active' : ''}`}
+                            onClick={() => set('guests', g)}
+                          >
+                            {g}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Date & Time */}
+              <div className="party-section-card">
+                <div className="party-section-title">
+                  <span className="party-step-num">3</span>
+                  <strong>Event Schedule (Earliest 48h Notice)</strong>
+                </div>
+                
+                <div style={{ marginBottom: 10 }}>
+                  <label>Select Date</label>
+                  <div className="party-scroll-chips">
+                    {validDays().map((d) => (
+                      <button
+                        key={d}
+                        type="button"
+                        className={`selectable-chip ${partyDate === d ? 'active' : ''}`}
+                        onClick={() => setPartyDate(d)}
+                      >
+                        {dayLabel(d)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label>Delivery Slot</label>
+                  <div className="party-scroll-chips">
+                    {TIME_SLOTS.map(([v, l]) => (
+                      <button
+                        key={v}
+                        type="button"
+                        className={`selectable-chip ${partyTime === v ? 'active' : ''}`}
+                        onClick={() => setPartyTime(v)}
+                      >
+                        {l}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* 4. Notes & Delivery Directions */}
+              <div className="party-section-card">
+                <div className="party-section-title">
+                  <span className="party-step-num">4</span>
+                  <strong>Venue Directions &amp; Menu Preferences</strong>
+                </div>
+                <textarea
+                  id="party-notes"
+                  rows={2}
+                  value={form.notes}
+                  onChange={(e) => set('notes', e.target.value)}
+                  placeholder="e.g. 15 Veg Biryani, 35 Chicken Dum Biryani, exact banquet hall or office delivery notes…"
+                />
+              </div>
+            </div>
+
+            <Err msg={err} />
+            {ok && <div className="banner ok" style={{ margin: '12px 0' }}>{ok}</div>}
+
+            <button
+              className="btn btn-full party-submit-cta"
+              disabled={busy}
+            >
+              {busy ? 'Submitting…' : user ? 'Submit Party Enquiry →' : 'Sign in to Submit Enquiry →'}
+            </button>
+          </form>
+        </main>
+      </div>
+    </div>
   );
 }
