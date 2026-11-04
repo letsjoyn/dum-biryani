@@ -849,6 +849,95 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 /* ═══════════════════════════════════════════════════════
    MY ORDERS / TRACKING PAGE
    ═══════════════════════════════════════════════════════ */
+.orders-clean-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.order-card-row {
+  background: #FFFFFF;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+.order-card-row:hover {
+  border-color: var(--line-dark);
+  background: #FAF9F6;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+.order-card-row-info { flex: 1; min-width: 0; }
+.order-card-row-action { text-align: right; flex-shrink: 0; }
+.order-items-snippet {
+  font-size: 13px;
+  color: #4A4A46;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 520px;
+}
+@media (max-width: 600px) {
+  .order-card-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .order-card-row-action {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    border-top: 1px solid var(--line);
+    padding-top: 10px;
+  }
+}
+
+.order-item-compact-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.order-item-compact-row:last-child {
+  border-bottom: 0;
+}
+
+/* Auth Segmented Mode Switcher */
+.auth-tab-switch {
+  display: flex;
+  background: #F4F2EC;
+  border-radius: var(--r);
+  padding: 3px;
+  margin-bottom: 20px;
+  border: 1px solid var(--line);
+}
+.auth-tab-btn {
+  flex: 1;
+  background: transparent;
+  border: 0;
+  padding: 9px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: calc(var(--r) - 1px);
+  color: var(--muted);
+  transition: all 0.15s ease;
+}
+.auth-tab-btn:hover {
+  color: #111;
+}
+.auth-tab-btn.active {
+  background: #FFFFFF;
+  color: #111;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
 .orders-page-layout {
   display: grid;
   grid-template-columns: 360px 1fr;
