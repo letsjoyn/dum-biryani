@@ -1,4 +1,4 @@
-# Dum House — direct ordering + kitchen display (demo)
+# Dum House — direct ordering + kitchen display
 
 A Hyderabad biryani chain's own ordering site, built for the Isocode SDE
 submission (problem #1). Customers order direct instead of through delivery
