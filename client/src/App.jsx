@@ -58,6 +58,12 @@ export default function App() {
   const [orderSuccessModal, setOrderSuccessModal] = useState(null);
 
   const handleSignInSuccess = (u) => {
+    // Managers and kitchen staff never have or share a customer cart
+    if (u.role === 'manager' || u.role === 'kitchen') {
+      setCart([]);
+      setCartOpen(false);
+      try { localStorage.removeItem('dh_cart'); } catch {}
+    }
     setAuthAnimation({ type: 'signin', role: u.role, name: u.name, exiting: false });
     setTimeout(() => {
       setUser(u);
@@ -78,6 +84,9 @@ export default function App() {
   };
 
   const handleSignOut = () => {
+    setCartOpen(false);
+    setCart([]);
+    try { localStorage.removeItem('dh_cart'); } catch {}
     setAuthAnimation({ type: 'signout', exiting: false });
     setTimeout(() => {
       setToken(null);
@@ -273,10 +282,22 @@ export default function App() {
     }
   }, [menu]);
 
-  const cartCount = cart.reduce((s, c) => s + c.qty, 0);
-  const cartTotal = cart.reduce((s, c) => s + c.unitPrice * c.qty, 0);
+  const isStaff = user?.role === 'manager' || user?.role === 'kitchen';
+
+  // Strictly enforce: Managers and kitchen staff NEVER share or view customer carts
+  useEffect(() => {
+    if (isStaff) {
+      if (cart.length > 0) setCart([]);
+      if (cartOpen) setCartOpen(false);
+      try { localStorage.removeItem('dh_cart'); } catch {}
+    }
+  }, [isStaff, cart.length, cartOpen]);
+
+  const cartCount = isStaff ? 0 : cart.reduce((s, c) => s + c.qty, 0);
+  const cartTotal = isStaff ? 0 : cart.reduce((s, c) => s + c.unitPrice * c.qty, 0);
 
   function addToCart(item, portion, addons) {
+    if (isStaff) return;
     let unit = item.price;
     if (item.portions.length) unit = (item.portions.find((p) => p.label === portion) || item.portions[0]).price;
     addons.forEach((a) => { const f = item.addons.find((x) => x.label === a); if (f) unit += f.price; });
@@ -289,6 +310,7 @@ export default function App() {
   }
 
   function updateCartQty(key, nextQty) {
+    if (isStaff) return;
     setCart((prev) => {
       if (nextQty <= 0) return prev.filter((c) => c.key !== key);
       return prev.map((c) => c.key === key ? { ...c, qty: Math.min(20, nextQty) } : c);
@@ -296,6 +318,7 @@ export default function App() {
   }
 
   function addSuggestion(sug) {
+    if (isStaff) return;
     const item = menu.find((m) => m.name === sug.item_name);
     if (!item) { setSugMsg('That item is not on this outlet menu right now.'); return; }
     if (item.outOfStock) { setSugMsg('That item is out of stock here right now.'); return; }
@@ -533,8 +556,8 @@ export default function App() {
         </div>
       )}
 
-      {/* Sticky cart pill */}
-      {cartCount > 0 && !cartOpen && view === 'menu' && (
+      {/* Sticky cart pill — Strictly customers/visitors only, never in manager or kitchen staff mode */}
+      {!isStaff && cartCount > 0 && !cartOpen && view === 'menu' && (
         <div className="sticky-cart" role="region" aria-label="Cart summary">
           <div className="sticky-cart-info">
             <span className="sticky-cart-badge">{cartCount} {cartCount === 1 ? 'item' : 'items'}</span>
@@ -552,8 +575,8 @@ export default function App() {
         </div>
       )}
 
-      {/* Cart drawer */}
-      {cartOpen && (
+      {/* Cart drawer — Strictly customers/visitors only, never in manager or kitchen staff mode */}
+      {!isStaff && cartOpen && (
         <Cart
           cart={cart} setCart={setCart}
           onClose={() => setCartOpen(false)}
