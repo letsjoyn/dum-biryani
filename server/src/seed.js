@@ -162,17 +162,15 @@ function seed(force = false) {
     db.prepare('INSERT INTO points_ledger (user_id,order_id,delta,reason,created_at) VALUES (?,?,?,?,?)').run(customerId, oid, Math.floor(payable / 20), `Earned on order ${orderNo}`, iso(-placedAgo));
     return oid;
   };
-  // Problem statement sample orders, priced and timed to match exactly:
+  // Problem statement sample orders (exactly the 3 orders from sample data table):
   // 1. WEB-778120 | Kondapur | Chicken dum biryani family pack x1, Double ka meetha x2 | 1180 | UPI | Preparing
   mkOrder('WEB-778120', 0, 'Preparing', [['Chicken Dum Biryani', 'Family (serves 4)', 1, 900], ['Double ka Meetha', '', 2, 140]], 1180, 1180, 'UPI', 45, 45, 45);
   // 2. WEB-778131 | Gachibowli cloud kitchen | Veg biryani x2, Mirchi ka salan x1 | 640 | Card | Ready for pickup
   mkOrder('WEB-778131', 14, 'Ready', [['Veg Biryani', 'Single', 2, 260], ['Mirchi ka Salan', '', 1, 120]], 640, 640, 'Card', 40, 0, 40);
   // 3. WEB-778146 | Kukatpally | Mutton haleem x3 | 1050 | UPI | Late by 4 minutes
   mkOrder('WEB-778146', 1, 'Preparing', [['Mutton Haleem', '', 3, 350]], 1050, 1050, 'UPI', 44, -4, 40);
-  // A couple of extra completed orders so the dashboard + reorder list feel real.
-  mkOrder('WEB-778100', 0, 'Handed over', [['Mutton Dum Biryani', 'Single', 1, 349], ['Raita', '', 1, 49]], 398, 398, 'UPI', 300, 35, 35);
-  mkOrder('WEB-778090', 2, 'Handed over', [['Chicken Dum Biryani', 'Single', 2, 299], ['Chicken 65', '', 1, 279]], 877, 877, 'Card', 1500, 40, 40);
-  console.log('Seed complete: 17 locations (14 outlets + 3 cloud kitchens), 18 items, 3 demo users, 5 orders, 2 coupons.');
+
+  console.log('Seed complete: 17 locations (14 outlets + 3 cloud kitchens), 18 items, 3 demo users, 3 sample orders, 2 coupons.');
 }
 
 if (require.main === module) seed();
