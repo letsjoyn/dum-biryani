@@ -326,14 +326,16 @@ app.patch('/api/kitchen/orders/:id/status', auth, (req, res) => {
   notify(o.id, `WhatsApp/SMS update sent — mock: your order ${o.order_no} is now ${status}.`);
   res.json(emitOrder(db.prepare('SELECT * FROM orders WHERE id=?').get(o.id)));
 });
-app.patch('/api/kitchen/orders/:id/promise', auth, requireRole('manager'), (req, res) => {
+app.patch('/api/kitchen/orders/:id/promise', auth, (req, res) => {
   const o = db.prepare('SELECT * FROM orders WHERE id=?').get(Number(req.params.id));
   if (!o) return res.status(404).json({ error: 'Order not found.' });
+  if (req.user.role === 'kitchen' && o.outlet_id !== req.user.outlet_id) return res.status(403).json({ error: 'This order belongs to another outlet.' });
+  if (!['kitchen', 'manager'].includes(req.user.role)) return res.status(403).json({ error: 'Kitchen or manager only.' });
   const mins = Number(req.body.minutes);
   if (!Number.isInteger(mins) || mins < 5 || mins > 240) return bad(res, 'Override must be 5 to 240 minutes from now.');
   const promisedAt = new Date(Date.now() + mins * 60000).toISOString();
   db.prepare('UPDATE orders SET promised_at=?, promise_override=?, history_note=? WHERE id=?')
-    .run(promisedAt, mins, `Manager override: promised time set to ${mins} min by ${req.user.name} at ${new Date().toISOString()}.`, o.id);
+    .run(promisedAt, mins, `${req.user.role === 'manager' ? 'Manager' : 'Kitchen'} override: promised time set to ${mins} min by ${req.user.name} at ${new Date().toISOString()}.`, o.id);
   res.json(emitOrder(db.prepare('SELECT * FROM orders WHERE id=?').get(o.id)));
 });
 const handleStockToggle = (req, res) => {
