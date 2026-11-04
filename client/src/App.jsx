@@ -52,6 +52,47 @@ export default function App() {
   // ── Location Modal State ──────────────────────────────────────────
   const [showLocModal, setShowLocModal] = useState(false);
 
+  // ── Auth Animation State ──────────────────────────────────────────
+  const [authAnimation, setAuthAnimation] = useState(null); // { type: 'signin' | 'signout', name?: string }
+
+  const handleSignInSuccess = (u) => {
+    setAuthAnimation({ type: 'signin', name: u.name });
+    setTimeout(() => {
+      setUser(u);
+      setAuthNotice('');
+      setAuthAnimation(null);
+      let after = null;
+      try { after = localStorage.getItem('dh_after_login'); localStorage.removeItem('dh_after_login'); } catch {}
+      const allowed = after && !roleForView(after, u);
+      setView(allowed ? after : (u.role === 'manager' ? 'admin' : (u.role === 'kitchen' ? 'kitchen' : 'menu')));
+    }, 950);
+  };
+
+  const handleSignOut = () => {
+    setAuthAnimation({ type: 'signout' });
+    setTimeout(() => {
+      setToken(null);
+      setUser(null);
+      setAuthAnimation(null);
+      setView('menu');
+    }, 1050);
+  };
+
+  const handleQuickCustomerLogin = async () => {
+    try {
+      const data = await api('/api/auth/login', {
+        method: 'POST',
+        body: { email: 'customer@demo.in', password: 'Demo123!' },
+        auth: false,
+      });
+      setToken(data.token);
+      handleSignInSuccess(data.user);
+    } catch (e) {
+      setAuthNotice('Sign in failed: ' + e.message);
+      setView('login');
+    }
+  };
+
   const socketRef = useRef(null);
 
   // ── Persist ───────────────────────────────────────────────────────
@@ -84,7 +125,7 @@ export default function App() {
 
   // ── Route guards ──────────────────────────────────────────────────
   const roleForView = (v, u) => {
-    if (v === 'track') return !u ? 'login' : (u.role === 'customer' ? null : 'denied');
+    if (v === 'track') return null; // Allow all visitors to view TrackPage (displays login prompt if guest)
     if (v === 'admin') return !u ? 'login' : (u.role === 'manager' ? null : 'denied');
     if (v === 'kitchen') return !u ? 'login' : (['kitchen', 'manager'].includes(u.role) ? null : 'denied');
     return null;
@@ -244,6 +285,7 @@ export default function App() {
         outletName={outlet?.name}
         areaName={areaName}
         onOpenLocationModal={() => setShowLocModal(true)}
+        onSignOut={handleSignOut}
       />
 
       <main className={`wrap ${view === 'track' ? 'main-track-view' : ''}`}>
@@ -266,13 +308,7 @@ export default function App() {
         {!(authChecked && roleForView(view, user) === 'denied') && view === 'login' && (
           <LoginPage
             notice={authNotice}
-            onDone={(u) => {
-              setUser(u); setAuthNotice('');
-              let after = null;
-              try { after = localStorage.getItem('dh_after_login'); localStorage.removeItem('dh_after_login'); } catch {}
-              const allowed = after && !roleForView(after, u);
-              setView(allowed ? after : (u.role === 'manager' ? 'admin' : 'menu'));
-            }}
+            onDone={handleSignInSuccess}
           />
         )}
 
@@ -292,8 +328,13 @@ export default function App() {
         )}
 
         {/* Track */}
-        {view === 'track' && authChecked && roleForView(view, user) !== 'denied' && (
-          <TrackPage user={user} socketRef={socketRef} />
+        {view === 'track' && authChecked && (
+          <TrackPage
+            user={user}
+            socketRef={socketRef}
+            onGoLogin={() => { setAuthNotice(''); setView('login'); }}
+            onQuickCustomerLogin={handleQuickCustomerLogin}
+          />
         )}
 
         {/* Party */}
@@ -326,6 +367,56 @@ export default function App() {
         <footer className="wrap footer">
           Dum House (demo) · Prices include 5% GST · FSSAI licences shown per outlet · Test payments only — no real money moves.
         </footer>
+      )}
+
+      {/* Full-Screen Animated Auth Transitions */}
+      {authAnimation && (
+        <div className={`auth-anim-overlay ${authAnimation.type}`} role="alert" aria-live="polite">
+          <div className="auth-anim-card">
+            <div className="auth-anim-brand">Dum <i>House</i></div>
+            <div className="auth-anim-badge">
+              {authAnimation.type === 'signin' ? 'Authenticating' : 'Session Terminated'}
+            </div>
+            <h2 className="auth-anim-title">
+              {authAnimation.type === 'signin'
+                ? `Welcome, ${authAnimation.name ? authAnimation.name.split(' ')[0] : 'Customer'}`
+                : 'Signing you out…'}
+            </h2>
+            <p className="auth-anim-sub">
+              {authAnimation.type === 'signin'
+                ? 'Preparing your live menu & order history…'
+                : 'Session credentials cleared · Returning to menu'}
+            </p>
+            <div className="auth-anim-loader-track">
+              <div className="auth-anim-loader-bar" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sticky cart pill */}
+      {cartCount > 0 && !cartOpen && view === 'menu' && (
+        <div className="sticky-cart">
+          <span>
+            <strong>{cartCount} item{cartCount > 1 ? 's' : ''}</strong>
+            {' '}· ₹{cartTotal.toLocaleString('en-IN')}
+            <span className="small" style={{ opacity: 0.7 }}> incl. GST</span>
+          </span>
+          <button onClick={() => setCartOpen(true)}>View cart →</button>
+        </div>
+      )}
+
+      {/* Cart drawer */}
+      {cartOpen && (
+        <Cart
+          cart={cart} setCart={setCart}
+          onClose={() => setCartOpen(false)}
+          user={user} outlet={outlet}
+          outletId={outletId} areaName={areaName}
+          cartNotice={cartNotice} onDismissNotice={() => setCartNotice('')}
+          goLogin={() => { setCartOpen(false); setView('login'); }}
+          onOrdered={() => { setCart([]); setCartOpen(false); setView('track'); }}
+        />
       )}
 
       {/* Sticky cart pill */}

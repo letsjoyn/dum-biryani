@@ -22,7 +22,7 @@ function stageSentence(s) {
   }[s] || s;
 }
 
-export default function TrackPage({ user, socketRef }) {
+export default function TrackPage({ user, socketRef, onGoLogin, onQuickCustomerLogin }) {
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false); // Mobile drill-down state
@@ -33,8 +33,9 @@ export default function TrackPage({ user, socketRef }) {
   const now = useNow(15000);
 
   useEffect(() => {
+    if (!user) { setLoading(false); return; }
     api('/api/loyalty/history').then(setLedger).catch(() => {});
-  }, []);
+  }, [user]);
 
   const toggleOptIn = async (v) => {
     setOptIn(v);
@@ -43,6 +44,7 @@ export default function TrackPage({ user, socketRef }) {
   };
 
   const load = async () => {
+    if (!user) { setLoading(false); return; }
     setLoading(true); setErr('');
     try {
       const o = await api('/api/orders/mine');
@@ -56,10 +58,10 @@ export default function TrackPage({ user, socketRef }) {
     } catch (e) { setErr(e.message); } finally { setLoading(false); }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [user]);
 
   useEffect(() => {
-    const s = socketRef.current; if (!s) return;
+    const s = socketRef?.current; if (!s || !user) return;
     const h = (o) => {
       setOrders((prev) => prev.map((x) => x.order_no === o.order_no ? o : x));
       setSelectedOrder((prev) => prev && prev.order_no === o.order_no ? o : prev);
@@ -69,14 +71,58 @@ export default function TrackPage({ user, socketRef }) {
     s.on('connect', onConnect);
     orders.forEach((o) => s.emit('join-order', o.order_no));
     return () => { s.off('order:updated', h); s.off('connect', onConnect); };
-  }, [orders.length]);
+  }, [orders.length, user]);
 
-  if (!user) return (
-    <div className="card" style={{ maxWidth: 440, margin: '48px auto', textAlign: 'center' }}>
-      <h2 className="serif" style={{ fontSize: 24, margin: '0 0 8px' }}>Sign in required</h2>
-      <p className="muted" style={{ margin: '0 0 16px' }}>Please sign in to view your orders and live tracking.</p>
-    </div>
-  );
+  if (!user) {
+    return (
+      <div className="tracking-logged-out-hero" style={{ maxWidth: 520, margin: '40px auto', padding: '0 16px' }}>
+        <div className="card" style={{ padding: '36px 28px', textAlign: 'center', border: '1px solid var(--line)' }}>
+          <div className="eyebrow" style={{ color: 'var(--accent)', marginBottom: 8 }}>Live Order Tracking</div>
+          <h2 className="serif" style={{ fontSize: 32, margin: '0 0 10px', color: 'var(--ink)' }}>
+            Track Your Orders & Rewards
+          </h2>
+          <p className="muted" style={{ fontSize: 14, margin: '0 0 24px', lineHeight: 1.6 }}>
+            Sign in to view real-time kitchen preparation status, delivery timestamps, and redeem your loyalty points.
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <button
+              type="button"
+              className="btn btn-full"
+              style={{ minHeight: 44, fontSize: 14.5 }}
+              onClick={onGoLogin}
+            >
+              Sign In to Your Account →
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-sec btn-full"
+              style={{ minHeight: 44, fontSize: 13.5 }}
+              onClick={onQuickCustomerLogin}
+            >
+              One-Click Demo Customer Login
+            </button>
+          </div>
+
+          <div style={{ marginTop: 24, paddingTop: 18, borderTop: '1px solid var(--line)', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+            <div>
+              <strong style={{ display: 'block', fontSize: 13 }}>Live KDS</strong>
+              <span className="small muted">Stage updates</span>
+            </div>
+            <div>
+              <strong style={{ display: 'block', fontSize: 13 }}>Honest AI</strong>
+              <span className="small muted">Queue prep-time</span>
+            </div>
+            <div>
+              <strong style={{ display: 'block', fontSize: 13 }}>5% Rewards</strong>
+              <span className="small muted">Loyalty credit</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const o = selectedOrder;
   const isCancelled = o?.status === 'Cancelled';

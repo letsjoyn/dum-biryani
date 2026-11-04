@@ -5,14 +5,25 @@ export default function Nav({
   view, setView, user, setUser, setToken,
   cartCount, onCartOpen, setAuthNotice,
   outletName, areaName, onOpenLocationModal,
+  onSignOut,
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const go = (v) => { setView(v); setMobileOpen(false); };
-  const signOut = () => { setToken(null); setUser(null); go('menu'); };
+  const handleSignOut = () => {
+    setMobileOpen(false);
+    if (onSignOut) {
+      onSignOut();
+    } else {
+      setToken(null);
+      setUser(null);
+      go('menu');
+    }
+  };
   const signIn = () => { setAuthNotice(''); go('login'); };
 
-  const showTrack = user?.role === 'customer';
+  // Always show "My orders" for visitors and customers!
+  const showTrack = !user || user.role === 'customer';
   const showKitchen = user?.role === 'manager';
   const showAdmin = user?.role === 'manager';
   const isStaff = user?.role === 'kitchen' || user?.role === 'manager';
@@ -74,8 +85,9 @@ export default function Nav({
               </span>
               <button
                 type="button"
-                className="btn btn-sec btn-sm"
-                onClick={signOut}
+                className="btn btn-sm btn-signout"
+                onClick={handleSignOut}
+                title="Sign out of account"
               >
                 Sign out
               </button>
@@ -170,7 +182,7 @@ export default function Nav({
 
             <div className="mobile-drawer-footer">
               {user ? (
-                <button className="btn btn-sec btn-full" onClick={signOut}>Sign out</button>
+                <button className="btn btn-full btn-signout" onClick={handleSignOut}>Sign out</button>
               ) : (
                 <button className="btn btn-full" onClick={signIn}>Sign in</button>
               )}

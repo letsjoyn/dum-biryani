@@ -39,9 +39,13 @@ export default function LoginPage({ onDone, notice }) {
 
   return (
     <section className="login-page-container" style={{ maxWidth: 440, margin: '48px auto' }}>
-      <h1 className="serif" style={{ fontSize: 38, margin: '0 0 6px' }}>Welcome back</h1>
+      <h1 className="serif" style={{ fontSize: 38, margin: '0 0 6px' }}>
+        {mode === 'login' ? 'Welcome back' : 'Create an account'}
+      </h1>
       <p className="muted" style={{ marginBottom: 20, fontSize: 14 }}>
-        Sign in to access your direct orders, live tracking, and loyalty rewards.
+        {mode === 'login'
+          ? 'Sign in to access your direct orders, live tracking, and loyalty rewards.'
+          : 'Create your Dum House account to earn 5% loyalty rewards on every direct order.'}
       </p>
 
       {notice && <div className="banner info" style={{ marginBottom: 16 }}>{notice}</div>}
