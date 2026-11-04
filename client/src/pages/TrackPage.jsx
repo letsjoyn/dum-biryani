@@ -1,4 +1,4 @@
-// TrackPage.jsx — order history + live tracking
+// TrackPage.jsx — order history + live tracking with clean distinct cards
 import { useState, useEffect } from 'react';
 import { api, fmt, fmtTime } from '../api.js';
 import { Err, ItemThumb, StatusBadge } from '../components/Common.jsx';
@@ -12,7 +12,14 @@ function useNow(ms = 30000) {
 }
 
 function stageSentence(s) {
-  return { Placed: 'Order placed', Preparing: 'Kitchen started', Ready: 'Ready for pickup', 'Rider handoff': 'Rider picked up', 'Handed over': 'Order delivered', Cancelled: 'Order cancelled' }[s] || s;
+  return {
+    Placed: 'Order placed & sent to kitchen',
+    Preparing: 'Kitchen preparing your order',
+    Ready: 'Food packed & ready for pickup',
+    'Rider handoff': 'Rider picked up order',
+    'Handed over': 'Delivered successfully',
+    Cancelled: 'Order cancelled',
+  }[s] || s;
 }
 
 function OrderDetail({ o }) {
@@ -31,7 +38,7 @@ function OrderDetail({ o }) {
   const remaining = Math.max(0, Math.round((promised - now) / 60000));
   const handedAt = stageTime('Handed over');
 
-  const headline = isCancelled ? 'Cancelled'
+  const headline = isCancelled ? 'Order Cancelled'
     : o.status === 'Handed over' ? `Delivered at ${handedAt ? new Date(handedAt).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' }) : fmtTime(o.promised_at)}`
     : o.status === 'Ready' ? 'Ready for pickup'
     : late ? `Running late by ${o.minutesLate} min`
@@ -42,114 +49,112 @@ function OrderDetail({ o }) {
     .filter((u) => u.text);
 
   return (
-    <div>
-      {/* Status card */}
+    <div className="order-detail-container">
+      {/* Header status card */}
       <div className="card">
         <div className="eyebrow">{o.outlet_name} · {o.payment_method} · {o.order_no}</div>
         <h2 className="serif" style={{ fontSize: 28, margin: '6px 0 4px' }}>{headline}</h2>
-        <p className="small muted" style={{ margin: '0 0 10px' }}>
-          Promised by {fmtTime(o.promised_at)} · {o.outlet_name}
+        <p className="small muted" style={{ margin: '0 0 12px' }}>
+          Promised by {fmtTime(o.promised_at)} · {o.outlet_name} Outlet
         </p>
         <StatusBadge status={o.status} />
         {o.delivery_address && (
-          <p className="small" style={{ marginTop: 10 }}>
-            Delivering to: <strong>{o.delivery_address}</strong>
+          <p className="small" style={{ marginTop: 12, padding: '8px 10px', background: '#F8F7F4', border: '1px solid var(--line)' }}>
+            Delivery Address: <strong>{o.delivery_address}</strong>
           </p>
         )}
         {late && (
           <div className="banner late" style={{ marginTop: 12 }}>
-            <strong>Running late — we're on it.</strong> The outlet manager has been alerted.
+            <strong>Running late — kitchen is on it.</strong> The outlet manager has been notified.
           </div>
         )}
       </div>
 
-      {/* Timeline */}
-      <div className="card" style={{ marginTop: 12 }}>
-        <h3 style={{ marginTop: 0 }}>Where is your order?</h3>
-        <div className="timeline-v">
+      {/* Timeline Steps */}
+      <div className="card" style={{ marginTop: 16 }}>
+        <h3 style={{ marginTop: 0, fontSize: 16, marginBottom: 14 }}>Order Status Progress</h3>
+        <div className="order-timeline-clean">
           {STAGES.map((s, i) => {
             const done = !isCancelled && i <= idx;
             const current = !isCancelled && i === idx;
             const at = stageTime(s);
             return (
-              <div key={s} className={`tl-row ${done ? 'done' : ''} ${current ? 'current' : ''}`}>
-                <span className="tl-dot">{done ? '✓' : ''}</span>
-                <span className="tl-text">
-                  <strong>{s}</strong>
-                  {current && <span className="tl-now"> · Now</span>}
-                  {at && <span className="small muted"> · {new Date(at).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}</span>}
-                </span>
+              <div key={s} className={`timeline-step ${done ? 'done' : ''} ${current ? 'current' : ''}`}>
+                <div className="step-indicator">
+                  {done ? '✓' : i + 1}
+                </div>
+                <div className="step-info">
+                  <div className="step-title">
+                    <strong>{s}</strong>
+                    {current && <span className="step-now-badge">Current</span>}
+                  </div>
+                  {at && (
+                    <span className="small muted">
+                      {new Date(at).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}
+                    </span>
+                  )}
+                </div>
               </div>
             );
           })}
         </div>
-        {isCancelled && <p className="small muted" style={{ marginTop: 8 }}>This order was cancelled.</p>}
+        {isCancelled && <p className="small muted" style={{ marginTop: 10 }}>This order was cancelled.</p>}
       </div>
 
-      {/* Items */}
-      <div className="card" style={{ marginTop: 12 }}>
-        <h3 style={{ marginTop: 0 }}>Your items</h3>
+      {/* Items list */}
+      <div className="card" style={{ marginTop: 16 }}>
+        <h3 style={{ marginTop: 0, fontSize: 16, marginBottom: 12 }}>Items in this order</h3>
         {o.items.map((it, i) => (
           <div key={i} className="order-item-row">
             <ItemThumb photo={it.photo} name={it.item_name} />
-            <span className="order-item-main">
+            <div className="order-item-main">
               <strong>{it.item_name}</strong>
               <span className="small muted">{[it.portion, it.addons.length ? it.addons.join(', ') : ''].filter(Boolean).join(' · ')}</span>
-            </span>
-            <span className="small muted">× {it.qty}</span>
+            </div>
+            <span className="small muted" style={{ marginRight: 12 }}>× {it.qty}</span>
             <span className="price">{fmt(it.unit_price * it.qty)}</span>
           </div>
         ))}
       </div>
 
-      {/* Bill */}
-      <div className="card" style={{ marginTop: 12 }}>
-        <h3 style={{ marginTop: 0 }}>Bill</h3>
-        <div className="bill-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', fontSize: 14 }}>
-          <span>Subtotal</span><span>{fmt(o.subtotal)}</span>
-        </div>
-        {o.coupon_off ? <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', fontSize: 14 }}><span>Coupon</span><span>−{fmt(o.coupon_off)}</span></div> : null}
-        {o.loyalty_off ? <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', fontSize: 14 }}><span>Loyalty</span><span>−{fmt(o.loyalty_off)}</span></div> : null}
-        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', fontSize: 14, color: '#6B6B6B' }}><span>GST 5% (included)</span><span>{fmt(o.gst_amount)}</span></div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, borderTop: '1px solid #E7E5E0', paddingTop: 10, marginTop: 4, fontSize: 16 }}>
-          <span>Total paid</span><span>{fmt(o.payable)}</span>
-        </div>
+      {/* Bill summary */}
+      <div className="card" style={{ marginTop: 16 }}>
+        <h3 style={{ marginTop: 0, fontSize: 16, marginBottom: 12 }}>Payment Details</h3>
+        <div className="bill-row"><span>Subtotal</span><span>{fmt(o.subtotal)}</span></div>
+        {o.coupon_off ? <div className="bill-row" style={{ color: 'var(--green)' }}><span>Coupon Discount</span><span>−{fmt(o.coupon_off)}</span></div> : null}
+        {o.loyalty_off ? <div className="bill-row" style={{ color: 'var(--green)' }}><span>Loyalty Points Discount</span><span>−{fmt(o.loyalty_off)}</span></div> : null}
+        <div className="bill-row"><span className="muted">GST 5% (Included)</span><span className="muted">{fmt(o.gst_amount)}</span></div>
+        <div className="bill-row total"><span>Total Paid</span><span>{fmt(o.payable)}</span></div>
+
         {(o.points_earned > 0 || o.points_used > 0) && (
-          <p className="small muted" style={{ marginTop: 6 }}>
-            {o.points_earned > 0 ? `+${o.points_earned} loyalty points earned. ` : ''}
-            {o.points_used > 0 ? `${o.points_used} points used.` : ''}
+          <p className="small muted" style={{ marginTop: 10, padding: '8px 10px', background: '#F8F7F4' }}>
+            {o.points_earned > 0 ? `+${o.points_earned} loyalty points earned on this order. ` : ''}
+            {o.points_used > 0 ? `${o.points_used} points redeemed.` : ''}
           </p>
         )}
-        <details style={{ marginTop: 8 }}>
-          <summary className="small">How we estimated this</summary>
-          <p className="small muted" style={{ marginTop: 6 }}>
-            Base {o.estimate?.base ?? o.estimate_minutes} min + queue {o.estimate?.queueLoad ?? 0} min = {o.estimate?.total ?? o.estimate_minutes} min, promised {o.estimate?.promised ?? o.estimate_minutes} min.
-            {o.promise_override ? ` Manager override: ${o.promise_override} min.` : ''}
-          </p>
-        </details>
       </div>
 
-      {/* Updates */}
-      <div className="card" style={{ marginTop: 12 }}>
-        <h3 style={{ marginTop: 0 }}>Updates</h3>
-        <p className="small muted" style={{ marginTop: 0 }}>
-          Demo: WhatsApp/SMS sending is mocked. Live updates arrive without refresh.
+      {/* Updates log */}
+      <div className="card" style={{ marginTop: 16 }}>
+        <h3 style={{ marginTop: 0, fontSize: 16, marginBottom: 8 }}>Notification Log</h3>
+        <p className="small muted" style={{ marginTop: 0, marginBottom: 10 }}>
+          Transactional order updates sent automatically (mocked in demo).
         </p>
-        {updates.length === 0
-          ? <p className="small muted">No updates yet.</p>
-          : (
-            <div className="timeline-v">
-              {updates.map((u, i) => (
-                <div key={i} className="tl-row done">
-                  <span className="tl-dot">✓</span>
-                  <span className="tl-text">
-                    {u.text}
-                    <span className="small muted"> · {new Date(u.at).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}</span>
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
+        {updates.length === 0 ? (
+          <p className="small muted">Order just placed — updates will log here.</p>
+        ) : (
+          <div className="timeline-v">
+            {updates.map((u, i) => (
+              <div key={i} className="tl-row done">
+                <span className="tl-dot">✓</span>
+                <span className="tl-text">
+                  {u.text}
+                  <span className="small muted"> · {new Date(u.at).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}</span>
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -177,8 +182,11 @@ export default function TrackPage({ user, socketRef }) {
 
   const load = async () => {
     setLoading(true); setErr('');
-    try { const o = await api('/api/orders/mine'); setOrders(o); if (o[0]) setSelected(o[0]); }
-    catch (e) { setErr(e.message); } finally { setLoading(false); }
+    try {
+      const o = await api('/api/orders/mine');
+      setOrders(o);
+      if (o[0]) setSelected(o[0]);
+    } catch (e) { setErr(e.message); } finally { setLoading(false); }
   };
 
   useEffect(() => { load(); }, []);
@@ -197,68 +205,70 @@ export default function TrackPage({ user, socketRef }) {
   }, [orders.length]);
 
   if (!user) return (
-    <div className="card" style={{ marginTop: 24 }}>Please sign in to see your orders.</div>
+    <div className="card" style={{ marginTop: 24 }}>Please sign in to view your orders.</div>
   );
 
   return (
     <section style={{ marginTop: 24 }}>
-      <div className="eyebrow">Live tracking</div>
-      <h1 className="serif" style={{ fontSize: 36, margin: '8px 0 20px' }}>Your orders</h1>
+      <div className="eyebrow">Customer Dashboard</div>
+      <h1 className="serif" style={{ fontSize: 36, margin: '6px 0 20px' }}>Your orders</h1>
       <Err msg={err} retry={load} />
 
       {loading ? (
-        <div className="skeleton" style={{ height: 80, borderRadius: 12 }} />
+        <div className="skeleton" style={{ height: 100, borderRadius: 4 }} />
       ) : orders.length === 0 ? (
         <div className="card empty-state">
-          <h2 className="serif" style={{ fontSize: 24 }}>No orders yet.</h2>
-          <p className="muted">Your first biryani is waiting on the menu.</p>
+          <h2 className="serif" style={{ fontSize: 24 }}>No orders placed yet.</h2>
+          <p className="muted">Your fresh Hyderabadi biryani is waiting on the menu.</p>
         </div>
       ) : (
-        <div className="orders-layout">
-          {/* Order list sidebar */}
-          <div>
-            <div className="order-list">
+        <div className="orders-page-layout">
+          {/* Order list column */}
+          <div className="orders-sidebar-col">
+            <div className="order-cards-stack">
               {orders.map((o) => (
-                <button
+                <div
                   key={o.order_no}
-                  type="button"
-                  className={`order-card ${selected?.order_no === o.order_no ? 'on' : ''}`}
+                  className={`order-list-card ${selected?.order_no === o.order_no ? 'active' : ''}`}
                   onClick={() => setSelected(o)}
-                  aria-pressed={selected?.order_no === o.order_no}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === 'Enter') setSelected(o); }}
                 >
-                  <span className="order-card-main">
-                    <strong>{o.outlet_name}</strong>
-                    <span className="small muted">
-                      {new Date(o.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })} · {o.order_no}
-                    </span>
-                    <span className="small">
-                      {o.items.map((it) => `${it.item_name} ×${it.qty}`).slice(0, 2).join(', ')}
-                      {o.items.length > 2 ? ` +${o.items.length - 2} more` : ''}
-                    </span>
-                  </span>
-                  <span className="order-card-side">
+                  <div className="order-card-header">
+                    <span className="order-card-outlet">{o.outlet_name}</span>
                     <span className="price">{fmt(o.payable)}</span>
+                  </div>
+                  <div className="small muted" style={{ marginTop: 4 }}>
+                    {new Date(o.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}, {new Date(o.created_at).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })} · {o.order_no}
+                  </div>
+                  <div className="small" style={{ marginTop: 6, color: '#333' }}>
+                    {o.items.map((it) => `${it.item_name} ×${it.qty}`).join(', ')}
+                  </div>
+                  <div style={{ marginTop: 8 }}>
                     <StatusBadge status={o.status} />
-                  </span>
-                </button>
+                  </div>
+                </div>
               ))}
             </div>
 
-            {/* Loyalty points */}
-            <div className="card" style={{ marginTop: 16 }}>
-              <h3 style={{ marginTop: 0, fontSize: 16 }}>Loyalty points</h3>
+            {/* Loyalty points card */}
+            <div className="card" style={{ marginTop: 18 }}>
+              <h3 style={{ marginTop: 0, fontSize: 16 }}>Loyalty points balance</h3>
               <p className="small">
                 Balance: <strong>{user.points} points</strong><br />
-                <span className="muted">1 pt per ₹20 · 100 pts = ₹50 off</span>
+                <span className="muted">Earn 1 pt per ₹20 spent · 100 pts = ₹50 discount</span>
               </p>
               {ledger.length > 0 && (
-                <div className="table-scroll" style={{ marginTop: 8 }}>
+                <div className="table-scroll" style={{ marginTop: 10 }}>
                   <table className="table">
-                    <thead><tr><th>Change</th><th>Reason</th><th>When</th></tr></thead>
+                    <thead><tr><th>Change</th><th>Reason</th><th>Date</th></tr></thead>
                     <tbody>
                       {ledger.slice(0, 5).map((l) => (
                         <tr key={l.id}>
-                          <td style={{ color: l.delta > 0 ? '#1A7F37' : '#C2410C' }}>{l.delta > 0 ? `+${l.delta}` : l.delta}</td>
+                          <td style={{ color: l.delta > 0 ? 'var(--green)' : 'var(--red)', fontWeight: 600 }}>
+                            {l.delta > 0 ? `+${l.delta}` : l.delta}
+                          </td>
                           <td>{l.reason}</td>
                           <td>{new Date(l.created_at).toLocaleDateString('en-IN')}</td>
                         </tr>
@@ -267,25 +277,25 @@ export default function TrackPage({ user, socketRef }) {
                   </table>
                 </div>
               )}
-              <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontWeight: 400, marginTop: 10, fontSize: 13 }}>
+              <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontWeight: 400, marginTop: 12, fontSize: 12.5 }}>
                 <input type="checkbox" style={{ width: 'auto' }} checked={optIn} onChange={(e) => toggleOptIn(e.target.checked)} />
-                Marketing messages opt-in (DPDP Act 2023)
+                Opt in to promotional WhatsApp/SMS (DPDP Act 2023)
               </label>
             </div>
 
-            {/* Party enquiries */}
+            {/* Party enquiries card */}
             {myParties.length > 0 && (
-              <div className="card" style={{ marginTop: 12 }}>
-                <h3 style={{ marginTop: 0, fontSize: 16 }}>My party enquiries</h3>
+              <div className="card" style={{ marginTop: 16 }}>
+                <h3 style={{ marginTop: 0, fontSize: 16 }}>Party order bookings</h3>
                 <div className="table-scroll">
                   <table className="table">
-                    <thead><tr><th>Outlet</th><th>When</th><th>Status</th></tr></thead>
+                    <thead><tr><th>Outlet</th><th>Event Date</th><th>Status</th></tr></thead>
                     <tbody>
                       {myParties.map((pp) => (
                         <tr key={pp.id}>
-                          <td>{pp.outlet_name}</td>
+                          <td><strong>{pp.outlet_name}</strong></td>
                           <td>{new Date(pp.event_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</td>
-                          <td>{pp.status}</td>
+                          <td><span className="tag">{pp.status}</span></td>
                         </tr>
                       ))}
                     </tbody>
@@ -295,8 +305,8 @@ export default function TrackPage({ user, socketRef }) {
             )}
           </div>
 
-          {/* Order detail */}
-          <div>
+          {/* Selected Order Detail column */}
+          <div className="orders-main-col">
             {selected && <OrderDetail o={selected} />}
           </div>
         </div>
@@ -304,4 +314,3 @@ export default function TrackPage({ user, socketRef }) {
     </section>
   );
 }
-

@@ -128,8 +128,8 @@ export default function KitchenPage({ user, setUser, outlets, socketRef, onBack,
 
               const statusText = isReady ? 'READY — for pickup'
                 : late ? `LATE by ${minutesLate} min`
-                : isNew ? `NEW · ${remaining} min`
-                : `${remaining} min remaining`;
+                  : isNew ? `NEW · ${remaining} min`
+                    : `${remaining} min remaining`;
 
               const statusClass = isReady ? 'ok' : late ? 'late' : isNew ? 'placed' : 'preparing';
 

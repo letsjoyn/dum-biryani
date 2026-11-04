@@ -5,6 +5,7 @@ import './styles.css';
 
 import Nav from './components/Nav.jsx';
 import Cart from './components/Cart.jsx';
+import LocationModal from './components/LocationModal.jsx';
 
 import MenuPage from './pages/MenuPage.jsx';
 import TrackPage from './pages/TrackPage.jsx';
@@ -286,7 +287,7 @@ export default function App() {
             suggestions={suggestions} addSuggestion={addSuggestion}
             sugMsg={sugMsg} setSugMsg={setSugMsg}
             cartNotice={cartNotice} setCartNotice={setCartNotice}
-            showLocModal={showLocModal} setShowLocModal={setShowLocModal}
+            onOpenLocationModal={() => setShowLocModal(true)}
           />
         )}
 
@@ -308,6 +309,17 @@ export default function App() {
           <AdminPage outlets={outlets} />
         )}
       </main>
+
+      {/* Global Location Switcher Modal — Works from any tab */}
+      <LocationModal
+        isOpen={showLocModal}
+        onClose={() => setShowLocModal(false)}
+        outlets={outlets}
+        outletId={outletId}
+        setOutletId={setOutletId}
+        areaName={areaName}
+        setAreaName={setAreaName}
+      />
 
       {/* Footer */}
       <footer className="wrap footer">
