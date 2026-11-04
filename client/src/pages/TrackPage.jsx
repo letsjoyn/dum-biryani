@@ -22,7 +22,7 @@ function stageSentence(s) {
   }[s] || s;
 }
 
-export default function TrackPage({ user, socketRef, onGoLogin, onQuickCustomerLogin }) {
+export default function TrackPage({ user, socketRef, latestOrderNo, onGoLogin, onQuickCustomerLogin }) {
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false); // Mobile drill-down state
@@ -37,6 +37,17 @@ export default function TrackPage({ user, socketRef, onGoLogin, onQuickCustomerL
     api('/api/loyalty/history').then(setLedger).catch(() => {});
   }, [user]);
 
+  // When a newly placed order arrives, automatically select it and open details on mobile
+  useEffect(() => {
+    if (latestOrderNo && orders.length > 0) {
+      const match = orders.find((x) => x.order_no === latestOrderNo);
+      if (match) {
+        setSelectedOrder(match);
+        setMobileDetailOpen(true);
+      }
+    }
+  }, [latestOrderNo, orders]);
+
   const toggleOptIn = async (v) => {
     setOptIn(v);
     try { await api('/api/auth/me', { method: 'PATCH', body: { marketing_opt_in: v } }); }
@@ -50,6 +61,14 @@ export default function TrackPage({ user, socketRef, onGoLogin, onQuickCustomerL
       const o = await api('/api/orders/mine');
       setOrders(o);
       if (o.length > 0) {
+        if (latestOrderNo) {
+          const match = o.find((x) => x.order_no === latestOrderNo);
+          if (match) {
+            setSelectedOrder(match);
+            setMobileDetailOpen(true);
+            return;
+          }
+        }
         setSelectedOrder((prev) => {
           if (!prev) return o[0];
           return o.find((x) => x.order_no === prev.order_no) || o[0];
@@ -207,7 +226,7 @@ export default function TrackPage({ user, socketRef, onGoLogin, onQuickCustomerL
                     <div style={{ marginTop: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <StatusBadge status={ord.status} />
                       <span className="small view-details-text">
-                        {isSelected ? 'Viewing →' : 'Tap to track →'}
+                        {isSelected && mobileDetailOpen ? 'Viewing details ↓' : isSelected ? 'Selected · Tap to track →' : 'Tap to track →'}
                       </span>
                     </div>
                   </div>

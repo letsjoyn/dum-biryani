@@ -54,6 +54,7 @@ export default function App() {
 
   // ── Auth Animation State ──────────────────────────────────────────
   const [authAnimation, setAuthAnimation] = useState(null); // { type: 'signin' | 'signout', name?: string }
+  const [latestOrderNo, setLatestOrderNo] = useState(null);
 
   const handleSignInSuccess = (u) => {
     setAuthAnimation({ type: 'signin', name: u.name });
@@ -332,6 +333,7 @@ export default function App() {
           <TrackPage
             user={user}
             socketRef={socketRef}
+            latestOrderNo={latestOrderNo}
             onGoLogin={() => { setAuthNotice(''); setView('login'); }}
             onQuickCustomerLogin={handleQuickCustomerLogin}
           />
@@ -415,32 +417,12 @@ export default function App() {
           outletId={outletId} areaName={areaName}
           cartNotice={cartNotice} onDismissNotice={() => setCartNotice('')}
           goLogin={() => { setCartOpen(false); setView('login'); }}
-          onOrdered={() => { setCart([]); setCartOpen(false); setView('track'); }}
-        />
-      )}
-
-      {/* Sticky cart pill */}
-      {cartCount > 0 && !cartOpen && view === 'menu' && (
-        <div className="sticky-cart">
-          <span>
-            <strong>{cartCount} item{cartCount > 1 ? 's' : ''}</strong>
-            {' '}· ₹{cartTotal.toLocaleString('en-IN')}
-            <span className="small" style={{ opacity: 0.7 }}> incl. GST</span>
-          </span>
-          <button onClick={() => setCartOpen(true)}>View cart →</button>
-        </div>
-      )}
-
-      {/* Cart drawer */}
-      {cartOpen && (
-        <Cart
-          cart={cart} setCart={setCart}
-          onClose={() => setCartOpen(false)}
-          user={user} outlet={outlet}
-          outletId={outletId} areaName={areaName}
-          cartNotice={cartNotice} onDismissNotice={() => setCartNotice('')}
-          goLogin={() => { setCartOpen(false); setView('login'); }}
-          onOrdered={() => { setCart([]); setCartOpen(false); setView('track'); }}
+          onOrdered={(newOrder) => {
+            setCart([]);
+            setCartOpen(false);
+            setLatestOrderNo(newOrder?.order_no || null);
+            setView('track');
+          }}
         />
       )}
     </div>
