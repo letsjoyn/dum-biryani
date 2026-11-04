@@ -1574,24 +1574,41 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   min-width: 320px;
   max-width: calc(100vw - 32px);
   box-shadow: 0 12px 32px rgba(0,0,0,0.38), 0 2px 8px rgba(0,0,0,0.2);
-  animation: slideUpCart 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: slideUpCartDesktop 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes slideUpCartDesktop {
+  from {
+    transform: translate(-50%, 24px);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
 }
 @media (max-width: 600px) {
   .sticky-cart {
-    left: 12px;
-    right: 12px;
-    bottom: 16px;
-    transform: none;
-    min-width: 0;
-    max-width: none;
-    width: auto;
-    padding: 10px 14px;
-    gap: 10px;
+    left: 12px !important;
+    right: 12px !important;
+    bottom: 16px !important;
+    transform: none !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    width: auto !important;
+    padding: 10px 14px !important;
+    gap: 10px !important;
+    animation: slideUpCartMobile 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
   }
 }
-@keyframes slideUpCart {
-  from { transform: translate(-50%, 20px); opacity: 0; }
-  to { transform: translate(-50%, 0); opacity: 1; }
+@keyframes slideUpCartMobile {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 .sticky-cart-info {
   display: flex;
