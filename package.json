@@ -5,10 +5,11 @@
   "description": "Dum House \u2014 direct ordering website with kitchen display (Isocode SDE demo)",
   "scripts": {
     "install:all": "npm --prefix server install && npm --prefix client install",
+    "postinstall": "npm run install:all",
     "dev": "npm --prefix server run dev",
     "start": "npm --prefix server start",
     "test": "npm --prefix server test",
-    "build": "npm --prefix client run build",
+    "build": "npm run install:all && npm --prefix client run build",
     "seed": "npm --prefix server run seed",
     "prod": "npm run build && NODE_ENV=production npm --prefix server start"
   },
