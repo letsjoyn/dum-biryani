@@ -1,0 +1,337 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { io } from 'socket.io-client';
+import { api, setToken, token, socketUrl } from './api.js';
+import './styles.css';
+
+import Nav from './components/Nav.jsx';
+import Cart from './components/Cart.jsx';
+
+import MenuPage from './pages/MenuPage.jsx';
+import TrackPage from './pages/TrackPage.jsx';
+import KitchenPage from './pages/KitchenPage.jsx';
+import AdminPage from './pages/AdminPage.jsx';
+import LoginPage from './pages/LoginPage.jsx';
+import PartyPage from './pages/PartyPage.jsx';
+
+const VALID_VIEWS = ['menu', 'track', 'party', 'admin', 'kitchen', 'login'];
+
+function getInitialView() {
+  const h = window.location.hash.replace('#', '');
+  return VALID_VIEWS.includes(h) ? h : 'menu';
+}
+
+export default function App() {
+  // ── Auth ────────────────────────────────────────────────────────
+  const [user, setUser] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [authNotice, setAuthNotice] = useState('');
+
+  // ── Routing ──────────────────────────────────────────────────────
+  const [view, setView] = useState(getInitialView);
+
+  // ── Outlets & menu ────────────────────────────────────────────────
+  const [outlets, setOutlets] = useState([]);
+  const [outletId, setOutletId] = useState(() => Number(localStorage.getItem('dh_outlet')) || 1);
+  const [areaName, setAreaName] = useState(() => localStorage.getItem('dh_area') || 'Kondapur');
+  const [menu, setMenu] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  // ── Cart ──────────────────────────────────────────────────────────
+  const [cart, setCart] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('dh_cart') || '[]'); } catch { return []; }
+  });
+  const [cartOpen, setCartOpen] = useState(false);
+  const [cartNotice, setCartNotice] = useState('');
+
+  // ── AI suggestions ────────────────────────────────────────────────
+  const [suggestions, setSuggestions] = useState([]);
+  const [sugMsg, setSugMsg] = useState('');
+
+  const socketRef = useRef(null);
+
+  // ── Persist ───────────────────────────────────────────────────────
+  useEffect(() => { localStorage.setItem('dh_cart', JSON.stringify(cart)); }, [cart]);
+  useEffect(() => { localStorage.setItem('dh_outlet', String(outletId)); }, [outletId]);
+  useEffect(() => { localStorage.setItem('dh_area', areaName); }, [areaName]);
+
+  // ── Load user ─────────────────────────────────────────────────────
+  const loadMe = async () => {
+    const startedWith = token();
+    try { const me = await api('/api/auth/me'); setUser(me); }
+    catch { setUser(null); if (token() === startedWith) setToken(null); }
+    finally { setAuthChecked(true); }
+  };
+  useEffect(() => {
+    loadMe();
+    api('/api/outlets').then(setOutlets).catch(() => {});
+  }, []);
+
+  // ── Session expiry event ──────────────────────────────────────────
+  useEffect(() => {
+    const h = (e) => {
+      setToken(null); setUser(null);
+      setAuthNotice(e.detail || 'Session expired — please sign in again.');
+      setView('login');
+    };
+    window.addEventListener('dh:session-expired', h);
+    return () => window.removeEventListener('dh:session-expired', h);
+  }, []);
+
+  // ── Route guards ──────────────────────────────────────────────────
+  const roleForView = (v, u) => {
+    if (v === 'track') return !u ? 'login' : (u.role === 'customer' ? null : 'denied');
+    if (v === 'admin') return !u ? 'login' : (u.role === 'manager' ? null : 'denied');
+    if (v === 'kitchen') return !u ? 'login' : (['kitchen', 'manager'].includes(u.role) ? null : 'denied');
+    return null;
+  };
+
+  useEffect(() => {
+    if (!authChecked) return;
+    const r = roleForView(view, user);
+    if (r === 'login') {
+      try { localStorage.setItem('dh_after_login', view); } catch {}
+      setAuthNotice(
+        view === 'admin' ? 'Please sign in as a manager to open Admin.'
+        : view === 'kitchen' ? 'Please sign in as kitchen staff to open the kitchen display.'
+        : 'Please sign in to see your orders.'
+      );
+      setView('login');
+    }
+  }, [view, authChecked, user?.id]);
+
+  // ── Hash routing ──────────────────────────────────────────────────
+  useEffect(() => {
+    const onHash = () => {
+      const h = window.location.hash.replace('#', '');
+      if (VALID_VIEWS.includes(h)) setView(h);
+    };
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
+  useEffect(() => {
+    const h = `#${view}`;
+    if (window.location.hash !== h) window.history.replaceState(null, '', h);
+  }, [view]);
+
+  // ── Menu loading ──────────────────────────────────────────────────
+  const loadMenu = async () => {
+    setLoading(true); setError('');
+    try { setMenu(await api(`/api/menu?outletId=${outletId}`, { auth: false })); }
+    catch (e) { setError(e.message); } finally { setLoading(false); }
+  };
+  useEffect(() => { loadMenu(); }, [outletId]);
+
+  // ── AI suggestions ────────────────────────────────────────────────
+  useEffect(() => {
+    if (user?.role === 'customer') api('/api/suggestions').then(setSuggestions).catch(() => {});
+  }, [user]);
+
+  // ── Socket ────────────────────────────────────────────────────────
+  useEffect(() => {
+    const s = socketRef.current; if (!s) return;
+    s.auth = { token: token() };
+    if (s.connected) { s.disconnect(); s.connect(); }
+  }, [user?.id]);
+
+  useEffect(() => {
+    const s = socketRef.current; if (!s) return;
+    s.emit('join-outlet', outletId);
+    return () => { s.emit('leave-outlet', outletId); };
+  }, [outletId]);
+
+  useEffect(() => {
+    const s = io(socketUrl, { transports: ['websocket', 'polling'], auth: { token: token() } });
+    socketRef.current = s;
+    s.on('menu:updated', (m) => {
+      if (Number(m.outletId) === Number(localStorage.getItem('dh_outlet'))) loadMenu();
+    });
+    s.on('connect', () => loadMenu());
+    return () => s.disconnect();
+  }, []);
+
+  // ── Cart helpers ──────────────────────────────────────────────────
+  const cartRef = useRef(cart);
+  useEffect(() => { cartRef.current = cart; }, [cart]);
+
+  // Re-price cart when menu refreshes
+  useEffect(() => {
+    if (!menu.length || !cartRef.current.length) return;
+    const prev = cartRef.current; const next = []; const dropped = []; let priceChanged = false;
+    for (const c of prev) {
+      const item = menu.find((m) => m.id === c.itemId);
+      if (!item) { dropped.push(`${c.name} is no longer on this outlet's menu`); continue; }
+      if (item.outOfStock) { dropped.push(`${c.name} was paused and removed`); continue; }
+      let unit = item.price; let portion = c.portion;
+      if (item.portions.length) {
+        const found = item.portions.find((pp) => pp.label === c.portion) || item.portions[0];
+        unit = found.price; portion = found.label;
+      }
+      c.addons.forEach((a) => { const f = item.addons.find((x) => x.label === a); if (f) unit += f.price; });
+      if (unit !== c.unitPrice || portion !== c.portion) priceChanged = true;
+      next.push({ ...c, unitPrice: unit, portion });
+    }
+    if (dropped.length || priceChanged) {
+      setCart(next);
+      setCartNotice([...dropped, priceChanged ? 'Prices were updated to match the current menu.' : ''].filter(Boolean).join(' '));
+    }
+  }, [menu]);
+
+  const cartCount = cart.reduce((s, c) => s + c.qty, 0);
+  const cartTotal = cart.reduce((s, c) => s + c.unitPrice * c.qty, 0);
+
+  function addToCart(item, portion, addons) {
+    let unit = item.price;
+    if (item.portions.length) unit = (item.portions.find((p) => p.label === portion) || item.portions[0]).price;
+    addons.forEach((a) => { const f = item.addons.find((x) => x.label === a); if (f) unit += f.price; });
+    const key = `${item.id}|${portion}|${addons.join(',')}`;
+    setCart((prev) => {
+      const ex = prev.find((c) => c.key === key);
+      if (ex) return prev.map((c) => c.key === key ? { ...c, qty: Math.min(20, c.qty + 1) } : c);
+      return [...prev, { key, itemId: item.id, name: item.name, portion: portion || '', addons, qty: 1, unitPrice: unit }];
+    });
+  }
+
+  function addSuggestion(sug) {
+    const item = menu.find((m) => m.name === sug.item_name);
+    if (!item) { setSugMsg('That item is not on this outlet menu right now.'); return; }
+    if (item.outOfStock) { setSugMsg('That item is out of stock here right now.'); return; }
+    addToCart(item, sug.portion || (item.portions[0]?.label || ''), []);
+    setCartOpen(true);
+  }
+
+  // ── KDS shortcut: kitchen role gets KDS immediately ───────────────
+  if (user?.role === 'kitchen') {
+    return (
+      <KitchenPage
+        user={user} setUser={setUser}
+        outlets={outlets} socketRef={socketRef}
+      />
+    );
+  }
+
+  // Manager viewing kitchen view
+  if (user?.role === 'manager' && view === 'kitchen') {
+    return (
+      <KitchenPage
+        user={user} setUser={setUser}
+        outlets={outlets} socketRef={socketRef}
+        onBack={() => setView('admin')} backLabel="← Back to Admin"
+      />
+    );
+  }
+
+  const outlet = outlets.find((o) => o.id === outletId);
+
+  const deniedText = (v) =>
+    v === 'admin' ? `Admin is for managers only. You are signed in as ${user?.role}.`
+    : v === 'kitchen' ? `The kitchen display is for kitchen staff. You are signed in as ${user?.role}.`
+    : `My orders is for customer accounts. You are signed in as ${user?.role}.`;
+
+  return (
+    <div>
+      <Nav
+        view={view} setView={setView}
+        user={user} setUser={setUser}
+        setToken={setToken}
+        cartCount={cartCount}
+        onCartOpen={() => setCartOpen(true)}
+        setAuthNotice={setAuthNotice}
+      />
+
+      <main className="wrap">
+        {/* Auth-check loading */}
+        {!authChecked && ['track', 'admin', 'kitchen'].includes(view) && (
+          <div className="card" style={{ marginTop: 24 }}>Checking your sign-in…</div>
+        )}
+
+        {/* Access denied */}
+        {authChecked && roleForView(view, user) === 'denied' && (
+          <div className="card" style={{ marginTop: 24, maxWidth: 500 }}>
+            <div className="eyebrow">Access</div>
+            <h2 className="serif" style={{ fontSize: 28, margin: '8px 0' }}>This page isn't for your account.</h2>
+            <p className="muted">{deniedText(view)}</p>
+            <button className="btn" onClick={() => setView('menu')}>Back to Order</button>
+          </div>
+        )}
+
+        {/* Login */}
+        {!(authChecked && roleForView(view, user) === 'denied') && view === 'login' && (
+          <LoginPage
+            notice={authNotice}
+            onDone={(u) => {
+              setUser(u); setAuthNotice('');
+              let after = null;
+              try { after = localStorage.getItem('dh_after_login'); localStorage.removeItem('dh_after_login'); } catch {}
+              const allowed = after && !roleForView(after, u);
+              setView(allowed ? after : (u.role === 'manager' ? 'admin' : 'menu'));
+            }}
+          />
+        )}
+
+        {/* Menu */}
+        {view === 'menu' && (
+          <MenuPage
+            user={user} outlets={outlets}
+            outletId={outletId} setOutletId={setOutletId}
+            areaName={areaName} setAreaName={setAreaName}
+            menu={menu} loading={loading} error={error} loadMenu={loadMenu}
+            cart={cart} addToCart={addToCart}
+            suggestions={suggestions} addSuggestion={addSuggestion}
+            sugMsg={sugMsg} setSugMsg={setSugMsg}
+            cartNotice={cartNotice} setCartNotice={setCartNotice}
+            socketRef={socketRef}
+          />
+        )}
+
+        {/* Track */}
+        {view === 'track' && authChecked && roleForView(view, user) !== 'denied' && (
+          <TrackPage user={user} socketRef={socketRef} />
+        )}
+
+        {/* Party */}
+        {view === 'party' && (
+          <PartyPage
+            user={user} outlets={outlets}
+            goLogin={() => { setAuthNotice(''); setView('login'); }}
+          />
+        )}
+
+        {/* Admin */}
+        {view === 'admin' && user?.role === 'manager' && (
+          <AdminPage outlets={outlets} />
+        )}
+      </main>
+
+      {/* Footer */}
+      <footer className="wrap footer">
+        Dum House (demo) · Prices include 5% GST · FSSAI licences shown per outlet · Test payments only — no real money moves.
+      </footer>
+
+      {/* Sticky cart pill */}
+      {cartCount > 0 && !cartOpen && view === 'menu' && (
+        <div className="sticky-cart">
+          <span>
+            <strong>{cartCount} item{cartCount > 1 ? 's' : ''}</strong>
+            {' '}· ₹{cartTotal.toLocaleString('en-IN')}
+            <span className="small" style={{ opacity: 0.7 }}> incl. GST</span>
+          </span>
+          <button onClick={() => setCartOpen(true)}>View cart →</button>
+        </div>
+      )}
+
+      {/* Cart drawer */}
+      {cartOpen && (
+        <Cart
+          cart={cart} setCart={setCart}
+          onClose={() => setCartOpen(false)}
+          user={user} outlet={outlet}
+          outletId={outletId} areaName={areaName}
+          cartNotice={cartNotice} onDismissNotice={() => setCartNotice('')}
+          goLogin={() => { setCartOpen(false); setView('login'); }}
+          onOrdered={() => { setCart([]); setCartOpen(false); setView('track'); }}
+        />
+      )}
+    </div>
+  );
+}

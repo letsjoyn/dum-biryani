@@ -1,0 +1,19 @@
+{
+  "name": "dum-house-server",
+  "private": true,
+  "version": "1.0.0",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node src/server.js",
+    "seed": "node -e \"require('./src/seed').seed()\"",
+    "test": "node --test tests/prep.test.js tests/pricing.test.js tests/validation.test.js tests/kds.test.js tests/timewindow.test.js tests/admin.test.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "socket.io": "^4.8.1"
+  }
+}

@@ -1,0 +1,24 @@
+# Render — one single Web Service serving API + built frontend on one URL.
+# No separate static site: the Express server serves client/dist, so Socket.io
+# stays same-origin and there is no CORS split to debug.
+services:
+  - type: web
+    name: dum-house
+    runtime: node
+    plan: free
+    buildCommand: npm run install:all && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATA_DIR
+        value: /data
+      # FRONTEND_URL is intentionally NOT set on Render: same-origin serving
+      # means the browser talks to the same host, so no CORS origin is needed.
+    disks:
+      - name: dumhouse-data
+        mountPath: /data
+        sizeGB: 1
