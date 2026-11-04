@@ -105,8 +105,8 @@ export default function KitchenPage({ user, setUser, outlets, socketRef, onBack,
         )}
 
         {err && (
-          <div style={{ background: '#7F1D1D', color: '#fff', padding: '12px 16px', borderRadius: 10, marginBottom: 16 }}>
-            {err} <button onClick={load} style={{ marginLeft: 12, background: 'none', border: '1px solid #fff', color: '#fff', padding: '4px 10px', borderRadius: 6, cursor: 'pointer' }}>Retry</button>
+          <div style={{ background: '#7F1D1D', color: '#fff', padding: '12px 16px', borderRadius: 0, marginBottom: 16 }}>
+            {err} <button onClick={load} style={{ marginLeft: 12, background: 'none', border: '1px solid #fff', color: '#fff', padding: '4px 10px', borderRadius: 0, cursor: 'pointer' }}>Retry</button>
           </div>
         )}
 

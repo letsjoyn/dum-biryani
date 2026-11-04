@@ -1,4 +1,4 @@
-// TrackPage.jsx — Everything in one screen: internal scrollable orders on left, live tracking details on right
+// TrackPage.jsx — Split workspace on desktop (zero outer scroll) + clean drill-down on mobile (tap order to view details)
 import { useState, useEffect } from 'react';
 import { api, fmt, fmtTime } from '../api.js';
 import { Err, StatusBadge } from '../components/Common.jsx';
@@ -25,6 +25,7 @@ function stageSentence(s) {
 export default function TrackPage({ user, socketRef }) {
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [mobileDetailOpen, setMobileDetailOpen] = useState(false); // Mobile drill-down state
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
   const [ledger, setLedger] = useState([]);
@@ -77,7 +78,6 @@ export default function TrackPage({ user, socketRef }) {
     </div>
   );
 
-  // Active order calculations
   const o = selectedOrder;
   const isCancelled = o?.status === 'Cancelled';
   const stageIdx = isCancelled ? -1 : STAGES.indexOf(o?.status);
@@ -105,6 +105,11 @@ export default function TrackPage({ user, socketRef }) {
     .map((e) => ({ at: e.created_at, text: stageSentence(e.to_status || e.status) }))
     .filter((u) => u.text);
 
+  const handleSelectOrder = (ord) => {
+    setSelectedOrder(ord);
+    setMobileDetailOpen(true); // On mobile: immediately open details view
+  };
+
   return (
     <div className="tracking-workspace-wrap">
       <Err msg={err} retry={load} />
@@ -120,12 +125,12 @@ export default function TrackPage({ user, socketRef }) {
           <p className="muted">Your freshly made dum biryani is waiting on the menu.</p>
         </div>
       ) : (
-        <div className="tracking-split-view">
-          {/* ── LEFT PANE: Orders List (Scrolls independently!) ── */}
+        <div className={`tracking-split-view ${mobileDetailOpen ? 'mobile-show-details' : 'mobile-show-list'}`}>
+          {/* ── LEFT PANE: Orders List (Desktop split or Mobile list) ── */}
           <div className="tracking-orders-sidebar">
             <div className="sidebar-sticky-header">
               <div className="eyebrow">Your History</div>
-              <h2 className="serif" style={{ fontSize: 24, margin: '2px 0 0' }}>All Orders ({orders.length})</h2>
+              <h2 className="serif" style={{ fontSize: 22, margin: '2px 0 0' }}>All Orders ({orders.length})</h2>
             </div>
 
             <div className="tracking-orders-scroll-area">
@@ -135,10 +140,10 @@ export default function TrackPage({ user, socketRef }) {
                   <div
                     key={ord.order_no}
                     className={`order-row-item ${isSelected ? 'active' : ''}`}
-                    onClick={() => setSelectedOrder(ord)}
+                    onClick={() => handleSelectOrder(ord)}
                     role="button"
                     tabIndex={0}
-                    onKeyDown={(e) => { if (e.key === 'Enter') setSelectedOrder(ord); }}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleSelectOrder(ord); }}
                   >
                     <div className="row" style={{ alignItems: 'flex-start' }}>
                       <strong style={{ fontSize: 14 }}>{ord.outlet_name}</strong>
@@ -155,8 +160,8 @@ export default function TrackPage({ user, socketRef }) {
 
                     <div style={{ marginTop: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <StatusBadge status={ord.status} />
-                      <span className="small muted" style={{ fontSize: 11 }}>
-                        {isSelected ? 'Viewing' : 'Tap to track'}
+                      <span className="small view-details-text">
+                        {isSelected ? 'Viewing →' : 'Tap to track →'}
                       </span>
                     </div>
                   </div>
@@ -180,10 +185,19 @@ export default function TrackPage({ user, socketRef }) {
             </div>
           </div>
 
-          {/* ── RIGHT PANE: Live Tracking & Details (Scrolls independently!) ── */}
+          {/* ── RIGHT PANE: Live Tracking & Details (Desktop split or Mobile details view) ── */}
           <div className="tracking-details-pane">
             {o ? (
               <div className="tracking-details-scroll-content">
+                {/* Mobile Back Button to return to Orders List */}
+                <button
+                  type="button"
+                  className="mobile-back-to-orders-btn"
+                  onClick={() => setMobileDetailOpen(false)}
+                >
+                  ← Back to all orders
+                </button>
+
                 {/* 1. Header Banner */}
                 <div className="tracking-status-banner">
                   <div className="row" style={{ alignItems: 'flex-start' }}>
@@ -191,7 +205,7 @@ export default function TrackPage({ user, socketRef }) {
                       <div className="eyebrow" style={{ color: '#E2DFD8' }}>
                         {o.outlet_name} Kitchen · {o.payment_method} · #{o.order_no}
                       </div>
-                      <h1 className="serif" style={{ fontSize: 28, margin: '4px 0 2px', color: '#fff' }}>
+                      <h1 className="serif" style={{ fontSize: 26, margin: '4px 0 2px', color: '#fff' }}>
                         {headline}
                       </h1>
                       <p className="small" style={{ margin: 0, color: '#C8C5BE' }}>
@@ -199,7 +213,7 @@ export default function TrackPage({ user, socketRef }) {
                       </p>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <span className="price" style={{ fontSize: 20, color: '#fff' }}>{fmt(o.payable)}</span>
+                      <span className="price" style={{ fontSize: 18, color: '#fff' }}>{fmt(o.payable)}</span>
                       <div style={{ marginTop: 4 }}><StatusBadge status={o.status} /></div>
                     </div>
                   </div>
@@ -283,7 +297,7 @@ export default function TrackPage({ user, socketRef }) {
                   <div className="bill-row total"><span>Total Paid</span><span>{fmt(o.payable)}</span></div>
 
                   {(o.points_earned > 0 || o.points_used > 0) && (
-                    <p className="small muted" style={{ marginTop: 10, padding: '8px 12px', background: '#F8F7F4', borderRadius: 'var(--r)' }}>
+                    <p className="small muted" style={{ marginTop: 10, padding: '8px 12px', background: '#F8F7F4' }}>
                       {o.points_earned > 0 ? `+${o.points_earned} loyalty points earned on this order. ` : ''}
                       {o.points_used > 0 ? `${o.points_used} points redeemed.` : ''}
                     </p>
@@ -310,7 +324,7 @@ export default function TrackPage({ user, socketRef }) {
               </div>
             ) : (
               <div className="card" style={{ padding: 48, textAlign: 'center' }}>
-                <p className="muted">Select an order from the left to view live tracking.</p>
+                <p className="muted">Select an order to view tracking details.</p>
               </div>
             )}
           </div>

@@ -246,7 +246,7 @@ export default function App() {
         onOpenLocationModal={() => setShowLocModal(true)}
       />
 
-      <main className="wrap">
+      <main className={`wrap ${view === 'track' ? 'main-track-view' : ''}`}>
         {/* Auth-check loading */}
         {!authChecked && ['track', 'admin', 'kitchen'].includes(view) && (
           <div className="card" style={{ marginTop: 24 }}>Checking your sign-in…</div>
@@ -321,10 +321,12 @@ export default function App() {
         setAreaName={setAreaName}
       />
 
-      {/* Footer */}
-      <footer className="wrap footer">
-        Dum House (demo) · Prices include 5% GST · FSSAI licences shown per outlet · Test payments only — no real money moves.
-      </footer>
+      {/* Footer - hidden on tracking and kitchen views to avoid outer page scroll */}
+      {view !== 'track' && view !== 'kitchen' && (
+        <footer className="wrap footer">
+          Dum House (demo) · Prices include 5% GST · FSSAI licences shown per outlet · Test payments only — no real money moves.
+        </footer>
+      )}
 
       {/* Sticky cart pill */}
       {cartCount > 0 && !cartOpen && view === 'menu' && (
