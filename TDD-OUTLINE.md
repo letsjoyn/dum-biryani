@@ -1,10 +1,11 @@
-# Technical Design Document — outline (source for the final TDD PDF)
+# Technical Design Document — Dum House Direct Ordering & Kitchen Display
 
-**Project:** Dum House — restaurant chain direct ordering + kitchen display
-**Client brief:** Problem #1, Hyderabad biryani chain (fictional brand
-"Dum House" for the demo). **GitHub URL:** _placeholder — fill in after
-pushing from your own account._ **Live URL:** _placeholder — see
-`deployment.md`. No live URL or GitHub URL was created by the builder.
+**Project:** Dum House — Restaurant Chain Direct Ordering Platform with Live Kitchen Display  
+**Client Brief:** Problem 1 — Hyderabad Biryani and Hyderabadi Food Chain (14 Outlets + 3 Cloud Kitchens)  
+**GitHub Repository:** https://github.com/letsjoyn/dum-biryani  
+**Live Application:** http://localhost:4000 (Single-port Node/Express + Vite/React + WebSockets production build)  
+**Deployment Guide:** See `deployment.md` in repository root  
+**Candidate:** Nayvedya Joyn (`joynnayvedya@gmail.com`)  
 
 ## 1. Architecture and why
 

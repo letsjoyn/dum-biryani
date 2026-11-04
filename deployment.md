@@ -22,11 +22,12 @@ Requirements: Node.js >= 22 (Node 24 verified), npm. No database server,
 no native modules, no API keys.
 
 ```bash
-cd isocode-dum-house
-npm run install:all     # installs server/ and client/
+git clone https://github.com/letsjoyn/dum-biryani.git
+cd dum-biryani
+npm run install:all       # installs server/ and client/
 npm --prefix server test  # 25 tests — must pass
-npm run build           # builds client/ into client/dist/
-npm start               # serves API + built frontend on http://localhost:4000
+npm run build             # builds client/ into client/dist/
+npm start                 # serves API + built frontend on http://localhost:4000
 ```
 
 For frontend-only development with hot reload (optional):
@@ -38,9 +39,7 @@ npm --prefix server start
 npm --prefix client run dev
 ```
 
-On first boot the server seeds itself idempotently (4 outlets, 18 items,
-3 demo users, 5 orders including the brief's three sample orders, 2 coupons)
-if the tables are empty. Deleting the database file re-seeds on next boot.
+On first boot the server seeds itself idempotently (17 locations: 14 outlets + 3 cloud kitchens across Hyderabad, 18 menu items, 3 demo users, the brief's 3 exact sample orders, 2 coupons) if the tables are empty. Deleting the database file re-seeds on next boot.
 
 ## 2. Deploy on Render — one service (recommended)
 

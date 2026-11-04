@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Technical Design Document — Dum House Direct Ordering & KDS</title>
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 16mm 18mm 16mm;
+    @bottom-right {
+      content: counter(page) " / " counter(pages);
+      font-size: 9pt;
+      color: #666;
+    }
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #1A1A1A;
+    background: #FFFFFF;
+    line-height: 1.55;
+    font-size: 10pt;
+    margin: 0;
+    padding: 0;
+  }
+  h1, h2, h3, h4 {
+    color: #0F0F0F;
+    font-weight: 700;
+    margin-top: 1.2em;
+    margin-bottom: 0.4em;
+    page-break-after: avoid;
+  }
+  h1 {
+    font-size: 20pt;
+    border-bottom: 2px solid #111;
+    padding-bottom: 8px;
+    margin-top: 0;
+  }
+  h2 {
+    font-size: 13pt;
+    border-bottom: 1px solid #DDD;
+    padding-bottom: 4px;
+    margin-top: 1.4em;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  h3 {
+    font-size: 11pt;
+    margin-top: 1em;
+  }
+  p {
+    margin: 0.4em 0 0.6em;
+  }
+  ul, ol {
+    margin: 0.3em 0 0.6em 1.4em;
+    padding: 0;
+  }
+  li {
+    margin-bottom: 0.25em;
+  }
+  .header-meta {
+    background: #F9F8F5;
+    border: 1px solid #E5E0D8;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 16px;
+    font-size: 9.5pt;
+  }
+  .header-meta div strong {
+    color: #111;
+    display: inline-block;
+    width: 130px;
+  }
+  .header-meta a {
+    color: #B45309;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 14px;
+    font-size: 9pt;
+    page-break-inside: avoid;
+  }
+  th, td {
+    border: 1px solid #DDD;
+    padding: 6px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: #F4F2EC;
+    color: #111;
+    font-weight: 700;
+  }
+  code {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    font-size: 8.5pt;
+    background: #F4F2EC;
+    padding: 2px 4px;
+    border-radius: 2px;
+  }
+  pre {
+    background: #181715;
+    color: #F5F5F4;
+    padding: 10px 14px;
+    border-radius: 0;
+    font-size: 8.5pt;
+    overflow-x: auto;
+    page-break-inside: avoid;
+    line-height: 1.4;
+  }
+  .badge {
+    display: inline-block;
+    background: #111;
+    color: #FFF;
+    font-size: 8pt;
+    padding: 1px 6px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .alert-box {
+    border-left: 3px solid #B45309;
+    background: #FAF8F5;
+    padding: 8px 12px;
+    margin: 8px 0;
+    font-size: 9pt;
+  }
+  .page-break {
+    page-break-before: always;
+  }
+</style>
+</head>
+<body>
+
+<h1>Technical Design Document</h1>
+<p style="font-size: 12pt; color: #555; margin-top: -4px; margin-bottom: 12px;">
+  Dum House — Direct Ordering Web Platform & Real-Time Kitchen Display System (KDS)
+</p>
+
+<div class="header-meta">
+  <div><strong>Client Brief:</strong> Problem 1 — Hyderabad Food Chain (14 Outlets + 3 Cloud Kitchens)</div>
+  <div><strong>Candidate:</strong> Nayvedya Joyn (<a href="mailto:joynnayvedya@gmail.com">joynnayvedya@gmail.com</a>)</div>
+  <div><strong>GitHub Repository:</strong> <a href="https://github.com/letsjoyn/dum-biryani">https://github.com/letsjoyn/dum-biryani</a></div>
+  <div><strong>Live URL:</strong> <a href="http://localhost:4000">http://localhost:4000</a> (Production Single-Port Build)</div>
+  <div><strong>Submission Date:</strong> November 2026</div>
+  <div><strong>Target Stack:</strong> Node.js &ge; 22, Express, Socket.io, SQLite (<code>node:sqlite</code>), Vite, React</div>
+</div>
+
+<h2>1. Executive Summary & Problem Context</h2>
+<p>
+  <strong>Company A</strong> is a premier Hyderabad restaurant chain operating 14 dine-in outlets and 3 cloud kitchens across the Greater Hyderabad area, generating ₹90–105 crore in annual revenue with 520 staff. Currently, 55% of revenue (₹52.8 crore) flows through third-party food delivery aggregators charging steep 25–30% commissions. Furthermore, the brand loses 30 high-margin party/catering orders monthly (₹18,000 average ticket) due to manual phone bottlenecks.
+</p>
+<p>
+  <strong>Target Economics:</strong> Shifting just 12% of app orders to direct ordering saves 15 commission points (₹95.04 lakh net savings). Recovering 30 catering orders/month yields ₹19.44 lakh. Total direct annual bottom-line benefit equals <strong>₹1.14 crore/year</strong>.
+</p>
+<p>
+  <strong>Delivered Product:</strong> A production-ready, full-stack, end-to-end direct ordering web application with automatic nearest-outlet georouting, a real-time Kitchen Display System (KDS) operating via WebSockets, centralized Menu CMS with outlet-level price overrides and instantaneous stock pausing (86-ing), 5% direct customer rewards, a DPDP Act 2023 compliant data model, and an executive outlet operations dashboard.
+</p>
+
+<h2>2. Architecture & Design Rationale</h2>
+<p>
+  The system is engineered as a <strong>single deployable unit</strong>: a high-performance Express.js server that simultaneously provides REST API endpoints, manages stateful bi-directional Socket.io WebSocket rooms, and serves the optimized production Vite/React Single Page Application (SPA) on a unified port.
+</p>
+<pre>
+┌────────────────────────────────────────────────────────────────────────────┐
+│                             BROWSER CLIENTS                                │
+│   Customer (Mobile/Desktop)   │   Kitchen Staff (Tablet KDS)   │   Manager │
+└───────────────────────┬──────────────────────┬──────────────────────┬──────┘
+                        │ HTTP REST            │ Socket.io (WS)       │
+                        ▼                      ▼                      ▼
+┌────────────────────────────────────────────────────────────────────────────┐
+│                        NODE / EXPRESS UNIFIED SERVER                       │
+│  ├── Static SPA Server (client/dist)                                       │
+│  ├── REST API Routes (/api/menu, /api/orders, /api/kitchen, /api/admin)    │
+│  ├── WebSocket Hub (Rooms: outlet:&lt;id&gt;, order:&lt;no&gt;)                       │
+│  └── Pure Business Logic Modules:                                          │
+│      ├── prep.js (Honest deterministic AI prep-time engine)                │
+│      ├── pricing.js (GST-inclusive calculations, coupons, loyalty ledger)  │
+│      ├── kds.js (Priority ticket sorting: late-first, promise sequence)    │
+│      └── timewindow.js (IST lunch/dinner menu availability)                │
+└─────────────────────────────────────┬──────────────────────────────────────┘
+                                      │ In-Memory IPC / WAL
+                                      ▼
+┌────────────────────────────────────────────────────────────────────────────┐
+│                       EMBEDDED SQLITE (node:sqlite)                        │
+│   app.db (Zero-dependency embedded database with WAL mode & Foreign Keys)  │
+└────────────────────────────────────────────────────────────────────────────┘
+</pre>
+<p>
+  <strong>Why this architecture was chosen:</strong>
+</p>
+<ul>
+  <li><strong>Zero Setup Friction:</strong> Using Node 22+ native <code>node:sqlite</code> eliminates native C++ compilation bindings (node-gyp/python) and external database daemon dependencies. A reviewer executes <code>npm run install:all && npm run build && npm start</code> and has a 100% functional system.</li>
+  <li><strong>Same-Origin Simplicity:</strong> Serving the Vite React client from Express completely eliminates CORS preflight overhead and cross-domain WebSocket proxy failures in production environments.</li>
+  <li><strong>Pure Deterministic Testability:</strong> Core domain logic (pricing math, GST splits, coupon stacking, AI prep calculation, KDS queue prioritization) is decoupled into pure functions covered by 25 automated unit tests with 0 external mocks.</li>
+</ul>
+
+<div class="page-break"></div>
+
+<h2>3. Data Model & Schema Design</h2>
+<p>
+  The schema is relational, fully normalized, and enforced with foreign key constraints in SQLite:
+</p>
+<table>
+  <thead>
+    <tr>
+      <th>Table</th>
+      <th>Primary Columns</th>
+      <th>Purpose & Business Rules</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>outlets</code></td>
+      <td><code>id, name, address, phone, fssai, min_prep_minutes, delivery_radius_km, lat, lon</code></td>
+      <td>Stores 14 physical outlets and 3 cloud kitchens in Hyderabad. Delivery radius strictly controls geofenced routing.</td>
+    </tr>
+    <tr>
+      <td><code>users</code></td>
+      <td><code>id, name, email, password_hash, role, outlet_id, points, phone, marketing_opt_in</code></td>
+      <td>Role-based access (<code>customer</code>, <code>kitchen</code>, <code>manager</code>). Kitchen staff are bound to a specific <code>outlet_id</code>. DPDP Act 2023 opt-in default is 0 (explicit consent required).</td>
+    </tr>
+    <tr>
+      <td><code>items</code></td>
+      <td><code>id, name, category, description, price, veg, spice, allergens, photo, portions, addons, base_minutes, menu_tag</code></td>
+      <td>Central menu items. Portions (Single/Family) and add-ons stored as structured JSON. Prices include 5% GST.</td>
+    </tr>
+    <tr>
+      <td><code>item_outlets</code></td>
+      <td><code>item_id, outlet_id, out_of_stock, price_override</code></td>
+      <td>Per-outlet availability and pricing. When <code>out_of_stock=1</code> (86'd), the dish vanishes in real-time from that outlet's customer menu.</td>
+    </tr>
+    <tr>
+      <td><code>orders</code></td>
+      <td><code>id, order_no, user_id, outlet_id, status, subtotal, payable, gst_amount, payment_method, estimate_minutes, estimate_breakdown, promised_at, delivery_address, request_key</code></td>
+      <td>Header table. <code>request_key</code> guarantees checkout idempotency. Stages: <code>Placed</code> &rarr; <code>Preparing</code> &rarr; <code>Ready</code> &rarr; <code>Handed over</code> &rarr; <code>Cancelled</code>.</td>
+    </tr>
+    <tr>
+      <td><code>order_items</code></td>
+      <td><code>id, order_id, item_id, item_name, portion, addons, qty, unit_price</code></td>
+      <td>Snapshot of ordered items and unit prices at time of order creation.</td>
+    </tr>
+    <tr>
+      <td><code>points_ledger</code></td>
+      <td><code>id, user_id, order_id, delta, reason, created_at</code></td>
+      <td>Immutable append-only ledger tracking 5% loyalty points earned (1 pt per ₹20) and redeemed (₹50 off per 100 pts).</td>
+    </tr>
+    <tr>
+      <td><code>order_events</code></td>
+      <td><code>id, order_id, status, to_status, created_at</code></td>
+      <td>Audit trail recording exact timestamps of stage transitions for calculating median prep metrics.</td>
+    </tr>
+    <tr>
+      <td><code>party_enquiries</code></td>
+      <td><code>id, user_id, outlet_id, name, phone, email, guests, event_date, preferred_time, notes, status, manager_note</code></td>
+      <td>Bulk catering enquiries enforcing 48-hour minimum advance notice. Reviewed and confirmed by catering managers.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>4. Primary Operational Workflows</h2>
+
+<h3>A. Customer Georouting & Direct Ordering</h3>
+<ol>
+  <li><strong>Locality Detection:</strong> Customer chooses from 40+ curated Hyderabad localities (or clicks GPS "Locate Me"). Haversine distance is calculated against all 17 hubs.</li>
+  <li><strong>Automatic Routing:</strong> The order automatically routes to the closest hub within delivery radius (e.g. Kondapur, Kukatpally, or Gachibowli Cloud Kitchen). If outside all radii, customer is informed with exact km distance.</li>
+  <li><strong>Time-Windowed Menu:</strong> Dishes tagged <em>Lunch only</em> (11:00–16:00 IST) or <em>Dinner only</em> (18:00+ IST) activate dynamically based on current IST time.</li>
+  <li><strong>Pricing & Checkout:</strong> All prices display 5% GST included. Customer can apply coupons (<code>DIRECT10</code>, <code>WELCOME100</code>) and redeem loyalty points. Simulated test payment via UPI or Card completes in &lt;60s.</li>
+</ol>
+
+<h3>B. Real-Time Kitchen Display System (KDS)</h3>
+<ol>
+  <li><strong>Live WebSocket Dispatch:</strong> Upon successful checkout, server broadcasts <code>order:created</code> to the specific outlet's WebSocket room (<code>outlet:&lt;id&gt;</code>). The order ticket appears instantly without browser reload.</li>
+  <li><strong>Late-First Ticket Sorting:</strong> Orders overdue by 10+ minutes flash critical red and pin to the top of the queue. Active tickets sort by promised delivery time.</li>
+  <li><strong>One-Tap Stage Progression:</strong> Kitchen staff tap <code>Mark Preparing &rarr;</code> &rarr; <code>Mark Ready for Pickup &rarr;</code> &rarr; <code>Handover to Rider &rarr;</code> &rarr; <code>Complete Order</code>. Every state change broadcasts live to the customer's tracking screen.</li>
+  <li><strong>Instant 86-ing Stock Controls:</strong> Kitchen staff tap any dish button to toggle stock status. When 86'd, the item disappears in real time from customer menus for that outlet only.</li>
+</ol>
+
+<div class="page-break"></div>
+
+<h2>5. AI & Automation: Prep-Time Engine & Reorders</h2>
+<p>
+  Rather than unexplainable LLM calls, the "AI" is a <strong>transparent, deterministic queue-load estimation engine</strong> implemented in <code>server/src/prep.js</code>:
+</p>
+<pre>
+base      = slowest_item_prep_minutes + (extra_lines * 3 min) + (extra_units * 2 min)
+queueLoad = min(active_outlet_orders * 4 min, 30 min)
+total     = base + queueLoad
+promised  = max(total, outlet_minimum_prep_minutes)
+</pre>
+<p>
+  <strong>Where the AI can be wrong and built-in mitigations:</strong>
+</p>
+<ul>
+  <li><strong>Outlet Floor Constraint:</strong> The promised time is never lower than the outlet's minimum floor (e.g., 30–35 min), preventing under-promising during cold kitchen starts.</li>
+  <li><strong>Inline Manual Overrides:</strong> When unexpected kitchen bottlenecks occur, kitchen staff and managers have an inline override bar right on the ticket: 1-tap quick chips (<code>+15m</code>, <code>+30m</code>, <code>+45m</code>, <code>+60m</code>) or custom minute inputs immediately update the customer's promised time.</li>
+  <li><strong>Manager Escalation Alert:</strong> Orders running 10+ minutes past promise trigger an escalation banner on the KDS and push an automated <em>"Running late — kitchen is expediting"</em> update to the customer.</li>
+  <li><strong>Smart Reorder Automation:</strong> AI suggests items based on customer past order frequency. To prevent accidental charges, <strong>suggestions never auto-add to the cart</strong>.</li>
+</ul>
+
+<h2>6. UI / UX Design & Accessibility Standards</h2>
+<ul>
+  <li><strong>Restrained Artisanal Palette:</strong> Grounded in warm deep charcoal (<code>#111111</code>), artisanal linen (<code>#FAF8F4</code>), hairline borders (<code>#2B2823</code>), and warm amber accents (<code>#B45309</code>). Zero emojis across the entire UI for a sleek, enterprise feel.</li>
+  <li><strong>Zero Border Radius (<code>--r: 0px !important</code>):</strong> Clean architectural square aesthetic reflecting modern brutalist editorial design.</li>
+  <li><strong>2-Metre KDS Readability:</strong> High-contrast dark theme (<code>#141311</code>) with large bold quantities (<code>&times;2</code>), dish names, and high-contrast stage buttons (stark white with black text for cooking stages) designed for hot, noisy kitchen environments.</li>
+  <li><strong>Fluid, Non-Laggy Micro-Interactions:</strong> Snappy 0.22s entrances with <code>cubic-bezier(0.16, 1, 0.3, 1)</code> for seamless page transitions, modal scale-ins, and mobile cart drawers with zero horizontal tucking.</li>
+</ul>
+
+<h2>7. Reviewer Must-Have Verification Matrix</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Brief Must-Have Requirement</th>
+      <th>Implementation Location</th>
+      <th>Verification Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>14 Outlets + 3 Cloud Kitchens</td>
+      <td><code>server/src/seed.js</code>, <code>LocationModal.jsx</code></td>
+      <td>All 17 Hyderabad locations seeded with lat/lon, FSSAI, min prep & delivery radius.</td>
+    </tr>
+    <tr>
+      <td>Exact Sample Orders Seeding</td>
+      <td><code>server/src/seed.js</code></td>
+      <td>Seeded with exact items, prices, payments & statuses (<code>WEB-778120</code> Preparing, <code>WEB-778131</code> Ready, <code>WEB-778146</code> Late by 4m).</td>
+    </tr>
+    <tr>
+      <td>Direct Customer Ordering & Cart</td>
+      <td><code>MenuPage.jsx</code>, <code>Cart.jsx</code></td>
+      <td>Add-ons, portion packs (Single/Family), coupon codes, 5% loyalty redemption, test UPI/card.</td>
+    </tr>
+    <tr>
+      <td>Real-Time Kitchen Display (KDS)</td>
+      <td><code>KitchenPage.jsx</code>, <code>server.js</code></td>
+      <td>Instant WebSocket updates, 5 stage transitions, elapsed & countdown timers, 10m+ late alerts.</td>
+    </tr>
+    <tr>
+      <td>Central Menu CMS & Price Overrides</td>
+      <td><code>AdminPage.jsx</code></td>
+      <td>Full dish CRUD, veg/spice badges, photo URLs, time-windows, per-outlet price customization.</td>
+    </tr>
+    <tr>
+      <td>Instant 86-ing Stock Controls</td>
+      <td><code>KitchenPage.jsx</code>, <code>AdminPage.jsx</code></td>
+      <td>Real-time out-of-stock toggle immediately pauses/resumes dishes on customer ordering menu.</td>
+    </tr>
+    <tr>
+      <td>Party & Bulk Catering Module</td>
+      <td><code>PartyPage.jsx</code>, <code>AdminPage.jsx</code></td>
+      <td>Enforces strict 48-hour advance notice; catering manager confirmation with customer note.</td>
+    </tr>
+    <tr>
+      <td>Outlet Operations Dashboard</td>
+      <td><code>AdminPage.jsx</code></td>
+      <td>Live metrics: orders, revenue, cancellations, repeat customer rate, and median prep time.</td>
+    </tr>
+    <tr>
+      <td>Compliance: FSSAI, GST, DPDP Act 2023</td>
+      <td><code>Cart.jsx</code>, <code>Nav.jsx</code>, <code>server.js</code></td>
+      <td>FSSAI displayed per outlet; 5% GST included & itemized; marketing opt-in checkbox defaults to 0.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>8. What Was Cut vs. Next Production Steps</h2>
+<ul>
+  <li><strong>Deliberate Cuts (Brief Out-of-Scope):</strong> Third-party delivery aggregator scraping/integration, dedicated proprietary rider tracking apps (riders provided by logistics partner), physical POS/billing replacement.</li>
+  <li><strong>Next Production Roadmap:</strong>
+    <ol>
+      <li>Migrate SQLite to distributed PostgreSQL with Redis Pub/Sub for horizontal scaling across 1,200 peak orders/hour.</li>
+      <li>Production payment gateway integration (Razorpay / Cashfree) with webhooks.</li>
+      <li>GupShup / Twilio WhatsApp & SMS transactional messaging gateway integration.</li>
+      <li>Google Maps Distance Matrix API integration for live road traffic travel time routing.</li>
+    </ol>
+  </li>
+</ul>
+
+</body>
+</html>
