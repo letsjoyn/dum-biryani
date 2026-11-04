@@ -21,7 +21,7 @@ const nextStage = (o) => ({
 const stageActionText = (s) => ({
   Placed: 'Start Cooking →',
   Preparing: 'Mark Ready for Pickup ✓',
-  Ready: 'Handover to Rider 🛵',
+  Ready: 'Handover to Rider →',
   'Rider handoff': 'Complete Order ✓',
 }[s] || `Mark ${s} →`);
 
@@ -213,7 +213,7 @@ export default function KitchenPage({ user, setUser, outlets, socketRef, onBack,
         {/* Critical Late Alert Banner */}
         {lateAlerts.length > 0 && (
           <div className="kds-alert-banner">
-            <div className="kds-alert-icon">⚠️</div>
+            <div className="kds-alert-icon">!</div>
             <div>
               <strong>MANAGER ESCALATION: {lateAlerts.length} ORDER{lateAlerts.length > 1 ? 'S' : ''} OVERDUE BY 10+ MINS</strong>
               <div className="small" style={{ opacity: 0.9 }}>
@@ -357,7 +357,7 @@ export default function KitchenPage({ user, setUser, outlets, socketRef, onBack,
                         className="ticket-override-toggle-btn"
                         onClick={() => setShowOverride({ ...showOverride, [o.id]: !isOverrideOpen })}
                       >
-                        <span>⚙ Prep Time Override {isOverrideOpen ? '▴' : '▾'}</span>
+                        <span>Prep Time Override {isOverrideOpen ? '▴' : '▾'}</span>
                         <span className="small muted">Adjust promised delivery time</span>
                       </button>
 

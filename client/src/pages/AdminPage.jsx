@@ -514,7 +514,7 @@ function StockControl({ outlets, items, onUpdated }) {
                         fontSize: 12.5,
                         color: isOutOfStock ? '#DC2626' : '#10B981',
                       }}>
-                        {isOutOfStock ? '🔴 OUT OF STOCK (86\'d)' : '🟢 READY TO SERVE'}
+                        {isOutOfStock ? '● OUT OF STOCK (86\'d)' : '● READY TO SERVE'}
                       </span>
                     </td>
                     <td>
@@ -568,7 +568,7 @@ function PartyEnquiries({ parties, onUpdate }) {
               <tr key={pp.id}>
                 <td>
                   <strong>{pp.name}</strong>
-                  <div className="small muted">📞 +91 {pp.phone}</div>
+                  <div className="small muted">Ph: +91 {pp.phone}</div>
                   {pp.notes && <div className="small muted" style={{ marginTop: 2 }}>Note: {pp.notes}</div>}
                   {pp.manager_note && <div className="small" style={{ color: '#10B981', marginTop: 2, fontWeight: 600 }}>Catering Note: {pp.manager_note}</div>}
                 </td>
