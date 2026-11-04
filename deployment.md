@@ -1,9 +1,8 @@
 # Dum House — deployment guide
 
-**Live URL:** _placeholder — fill in after you deploy from your own account.
-No live deployment was created by the builder, and no cloud account was
-created. The app is designed so one URL serves everything (API + frontend +
-websockets, same origin).
+**GitHub Repository:** https://github.com/letsjoyn/dum-biryani
+
+**Live URL:** _Deployable via Render / Railway / Fly.io in 1 click using `render.yaml` (API + built React frontend + WebSockets on a single port)._
 
 ## Demo logins (password for all: `Demo123!`)
 
