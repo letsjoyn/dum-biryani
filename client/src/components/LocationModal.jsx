@@ -162,7 +162,7 @@ export default function LocationModal({
                   >
                     <div className="row">
                       <strong style={{ fontSize: 15 }}>{o.name}</strong>
-                      {o.id === outletId && <span className="badge-selected">Selected ✓</span>}
+                      {o.id === outletId && <span className="badge-selected">Selected</span>}
                     </div>
                     <div className="small muted" style={{ marginTop: 4 }}>
                       ~{o.distanceKm.toFixed(1)} km away · Delivery within {o.delivery_radius_km} km

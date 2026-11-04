@@ -226,7 +226,7 @@ export default function TrackPage({ user, socketRef, latestOrderNo, onGoLogin, o
                     <div style={{ marginTop: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <StatusBadge status={ord.status} />
                       <span className="small view-details-text">
-                        {isSelected && mobileDetailOpen ? 'Viewing details ↓' : isSelected ? 'Selected · Tap to track →' : 'Tap to track →'}
+                        {isSelected && mobileDetailOpen ? 'Viewing details' : isSelected ? 'Selected · Tap to track →' : 'Tap to track →'}
                       </span>
                     </div>
                   </div>
@@ -301,7 +301,7 @@ export default function TrackPage({ user, socketRef, latestOrderNo, onGoLogin, o
                       return (
                         <div key={s} className={`timeline-step ${done ? 'done' : ''} ${current ? 'current' : ''}`}>
                           <div className="step-indicator">
-                            {done ? '✓' : i + 1}
+                            {done ? '•' : i + 1}
                           </div>
                           <div className="step-info">
                             <div className="step-title">
@@ -376,7 +376,7 @@ export default function TrackPage({ user, socketRef, latestOrderNo, onGoLogin, o
                     <div className="timeline-v">
                       {updates.map((u, i) => (
                         <div key={i} className="tl-row done">
-                          <span className="tl-dot">✓</span>
+                          <span className="tl-dot">•</span>
                           <span className="tl-text">
                             {u.text}
                             <span className="small muted"> · {fmtTime(u.at)}</span>

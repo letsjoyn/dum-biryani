@@ -1869,13 +1869,15 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   border-color: #555045;
 }
 .kbtn-danger {
-  background: #2B1515;
-  color: #FCA5A5;
-  border: 1px solid #451A1A;
+  background: transparent !important;
+  color: #EF4444 !important;
+  border: 1px solid #571C1C !important;
+  border-radius: 0 !important;
 }
 .kbtn-danger:hover {
-  background: #7F1D1D;
-  color: #FFFFFF;
+  background: #7F1D1D !important;
+  border-color: #991B1B !important;
+  color: #FFFFFF !important;
 }
 
 /* Workspace Grid */
@@ -1914,37 +1916,37 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   }
 }
 
-/* KDS Order Ticket */
+/* KDS Order Ticket — Minimalist, Sleek, High-Contrast */
 .kds-order-ticket {
-  background: #151412;
-  border: 1px solid #2B2823;
-  border-left: 5px solid #F59E0B;
-  padding: 16px;
+  background: #141311;
+  border: 1px solid #282520;
+  border-left: 3px solid #78350F;
+  border-radius: 0 !important;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  box-shadow: none;
   transition: all .15s ease;
 }
 .kds-order-ticket.ticket-new {
-  border-left-color: #F59E0B;
+  border-left-color: #D97706;
 }
 .kds-order-ticket.ticket-preparing {
-  border-left-color: #38BDF8;
+  border-left-color: #78716C;
 }
 .kds-order-ticket.ticket-ready {
   border-left-color: #10B981;
-  background: #101813;
+  background: #111813;
 }
 .kds-order-ticket.ticket-late {
   border-left-color: #EF4444;
-  background: #1C1212;
+  background: #1A1212;
 }
 .kds-order-ticket.ticket-critical-late {
-  border: 2px solid #DC2626;
-  border-left: 6px solid #DC2626;
-  background: #241111;
-  box-shadow: 0 0 16px rgba(220, 38, 38, 0.25);
+  border: 1px solid #DC2626;
+  border-left: 4px solid #DC2626;
+  background: #201111;
 }
 
 /* Ticket Top Row */
@@ -1961,28 +1963,30 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   gap: 8px;
 }
 .ticket-num {
-  font-size: 19px;
+  font-size: 18px;
   font-weight: 800;
   color: #FFFFFF;
   letter-spacing: -0.01em;
 }
 .ticket-channel {
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 800;
   color: #A8A29E;
   background: #24221E;
   padding: 2px 6px;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
+  border-radius: 0 !important;
 }
 .ticket-elapsed-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
   color: #D6D3D1;
   background: #22201C;
-  padding: 3px 8px;
+  padding: 2px 8px;
+  border-radius: 0 !important;
 }
 .timer-dot {
   width: 6px;
@@ -2009,30 +2013,37 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   flex-wrap: wrap;
 }
 .ticket-pill-status {
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.03em;
-  padding: 3px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  text-transform: uppercase;
+  border-radius: 0 !important;
 }
 .ticket-pill-status.ticket-new {
-  color: #111111;
-  background: #FBBF24;
+  color: #F59E0B;
+  background: #241D12;
+  border: 1px solid #453310;
 }
 .ticket-pill-status.ticket-preparing {
-  color: #0C4A6E;
-  background: #7DD3FC;
+  color: #D6D3D1;
+  background: #1F1D19;
+  border: 1px solid #332F28;
 }
 .ticket-pill-status.ticket-ready {
-  color: #064E3B;
-  background: #6EE7B7;
+  color: #34D399;
+  background: #0E261B;
+  border: 1px solid #14532D;
 }
 .ticket-pill-status.ticket-late {
-  color: #FFFFFF;
-  background: #DC2626;
+  color: #FCA5A5;
+  background: #2D1414;
+  border: 1px solid #7F1D1D;
 }
 .ticket-pill-status.ticket-critical-late {
   color: #FFFFFF;
-  background: #991B1B;
+  background: #7F1D1D;
+  border: 1px solid #DC2626;
   animation: flashCritical 1.2s infinite;
 }
 @keyframes flashCritical {
@@ -2131,117 +2142,147 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 /* Stage Action Buttons */
 .kds-stage-action-btn {
   width: 100%;
-  min-height: 48px;
-  font-size: 16px;
-  font-weight: 800;
-  border: none;
+  min-height: 44px;
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
   cursor: pointer;
-  letter-spacing: 0.02em;
   transition: all .15s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   border-radius: 0 !important;
+  margin-top: 4px;
 }
 .kds-stage-action-btn.ticket-new {
-  background: #F59E0B;
-  color: #111111;
+  background: #B45309;
+  color: #FFFFFF;
+  border-color: #D97706;
 }
 .kds-stage-action-btn.ticket-new:hover {
-  background: #FBBF24;
+  background: #D97706;
 }
 .kds-stage-action-btn.ticket-preparing {
-  background: #0284C7;
-  color: #FFFFFF;
+  background: #FFFFFF;
+  color: #111111;
+  border-color: #FFFFFF;
 }
 .kds-stage-action-btn.ticket-preparing:hover {
-  background: #0369A1;
+  background: #F4F4F5;
+  border-color: #F4F4F5;
 }
 .kds-stage-action-btn.ticket-ready {
-  background: #10B981;
+  background: #15803D;
   color: #FFFFFF;
+  border-color: #16A34A;
 }
 .kds-stage-action-btn.ticket-ready:hover {
-  background: #059669;
+  background: #16A34A;
 }
 .kds-stage-action-btn.ticket-late,
 .kds-stage-action-btn.ticket-critical-late {
   background: #DC2626;
   color: #FFFFFF;
+  border-color: #EF4444;
 }
 .kds-stage-action-btn.ticket-late:hover,
 .kds-stage-action-btn.ticket-critical-late:hover {
   background: #B91C1C;
 }
 
-/* Override Drawer */
-.ticket-override-section {
-  border-top: 1px dashed #2E2B25;
-  padding-top: 8px;
-}
-.ticket-override-toggle-btn {
-  background: transparent;
-  border: none;
-  color: #A8A29E;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 4px 0;
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-}
-.ticket-override-toggle-btn:hover {
-  color: #FFFFFF;
-}
-.ticket-override-drawer {
-  background: #1C1A17;
+/* Sleek Inline Prep Time Override Strip */
+.ticket-override-strip {
+  background: #181614;
   border: 1px solid #2B2823;
-  padding: 10px;
-  margin-top: 6px;
+  border-radius: 0 !important;
+  padding: 8px 10px;
   display: flex;
   flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+.override-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   gap: 8px;
 }
-.override-quick-chips {
-  display: flex;
-  gap: 6px;
+.override-strip-label {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #A8A29E;
+  text-transform: uppercase;
 }
-.override-chip {
-  flex: 1;
-  background: #25231F;
+.override-inline-toast {
+  font-size: 11px;
+  font-weight: 600;
+  color: #34D399;
+}
+.override-strip-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.override-presets {
+  display: flex;
+  gap: 4px;
+}
+.kbtn-override-chip {
+  background: #24221E;
   border: 1px solid #38342D;
-  color: #F5F5F4;
-  padding: 6px 4px;
-  font-size: 12px;
+  color: #E7E5E4;
+  padding: 4px 8px;
+  font-size: 11.5px;
   font-weight: 700;
   cursor: pointer;
   border-radius: 0 !important;
   transition: all .12s ease;
 }
-.override-chip:hover {
+.kbtn-override-chip:hover {
   background: #B45309;
   border-color: #B45309;
   color: #FFFFFF;
 }
-.override-custom-row {
+.override-input-group {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
 }
-.override-num-input {
-  background: #25231F !important;
-  color: #FFFFFF !important;
+.k-override-input {
+  width: 58px !important;
+  min-height: 26px !important;
+  height: 26px !important;
+  background: #11100E !important;
   border: 1px solid #38342D !important;
-  padding: 6px 10px !important;
-  font-size: 12.5px !important;
-  min-height: 36px;
-  flex: 1;
+  color: #FFFFFF !important;
+  font-size: 11.5px !important;
+  padding: 2px 6px !important;
+  border-radius: 0 !important;
+  text-align: center;
 }
-.override-success-msg {
-  font-size: 11.5px;
-  color: #34D399;
-  margin-top: 4px;
-  font-weight: 600;
+.kbtn-override-apply {
+  background: #2E2B25;
+  border: 1px solid #454037;
+  color: #FFFFFF;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 0 !important;
+  height: 26px;
+  transition: all .12s ease;
+}
+.kbtn-override-apply:hover {
+  background: #B45309;
+  border-color: #B45309;
 }
 
 /* 86-ing Stock Control Panel */
@@ -2249,15 +2290,42 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   margin-top: 36px;
   background: #141311;
   border: 1px solid #282520;
+  border-radius: 0 !important;
   padding: 20px 24px;
 }
 .kds-stock-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding-bottom: 12px;
+  gap: 16px;
+  padding-bottom: 14px;
   border-bottom: 1px solid #282520;
   margin-bottom: 16px;
+}
+.kds-stock-title {
+  font-family: var(--sans);
+  font-size: 13.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #FFFFFF;
+  margin: 0 0 4px;
+}
+.kds-stock-desc {
+  font-size: 12px;
+  color: #8C867E;
+  margin: 0;
+  line-height: 1.4;
+}
+.kds-stock-paused-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: #F59E0B;
+  background: #241D12;
+  border: 1px solid #453310;
+  padding: 4px 10px;
+  border-radius: 0 !important;
+  white-space: nowrap;
 }
 .kds-stock-pills-wrap {
   display: flex;
@@ -2268,8 +2336,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 14px;
-  font-size: 13px;
+  padding: 7px 12px;
+  font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
   border: 1px solid #332F28;
@@ -2279,27 +2347,46 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   transition: all .15s ease;
 }
 .kds-stock-pill-btn:hover {
-  border-color: #F59E0B;
+  border-color: #78716C;
 }
 .kds-stock-pill-btn.paused {
-  background: #261313;
-  border-color: #DC2626;
+  background: #2A1717;
+  border-color: #7F1D1D;
   color: #FCA5A5;
 }
+.kds-stock-pill-btn.live {
+  background: #141311;
+  border-color: #282520;
+}
 .stock-pill-dot {
-  font-size: 10px;
+  font-size: 9px;
+  line-height: 1;
 }
 .kds-stock-pill-btn.live .stock-pill-dot {
   color: #10B981;
 }
 .kds-stock-pill-btn.paused .stock-pill-dot {
-  color: #DC2626;
+  color: #EF4444;
+}
+.stock-pill-name {
+  font-weight: 600;
 }
 .stock-pill-status {
   font-size: 10px;
-  font-weight: 800;
-  opacity: 0.8;
-  letter-spacing: 0.04em;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 1px 5px;
+  border-radius: 0 !important;
+}
+.kds-stock-pill-btn.live .stock-pill-status {
+  background: #0E261B;
+  color: #34D399;
+  border: 1px solid #14532D;
+}
+.kds-stock-pill-btn.paused .stock-pill-status {
+  background: #450A0A;
+  color: #F87171;
+  border: 1px solid #991B1B;
 }
 
 /* ═══════════════════════════════════════════════════════

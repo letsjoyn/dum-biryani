@@ -20,9 +20,9 @@ const nextStage = (o) => ({
 
 const stageActionText = (s) => ({
   Placed: 'Start Cooking →',
-  Preparing: 'Mark Ready for Pickup ✓',
+  Preparing: 'Mark Ready for Pickup →',
   Ready: 'Handover to Rider →',
-  'Rider handoff': 'Complete Order ✓',
+  'Rider handoff': 'Complete Order →',
 }[s] || `Mark ${s} →`);
 
 export default function KitchenPage({ user, setUser, outlets, socketRef, onBack, backLabel, onSignOut }) {
@@ -195,7 +195,7 @@ export default function KitchenPage({ user, setUser, outlets, socketRef, onBack,
           )}
 
           <button type="button" className="kbtn kbtn-dark" onClick={load} title="Force sync orders">
-            ↻ Refresh
+            Refresh
           </button>
 
           <button
@@ -287,7 +287,7 @@ export default function KitchenPage({ user, setUser, outlets, socketRef, onBack,
                     <div className={`ticket-pill-status ${ticketClass}`}>
                       {criticalLate ? `CRITICAL LATE · +${minutesLate}M OVER` :
                        late ? `RUNNING LATE · +${minutesLate}M` :
-                       isReady ? 'READY FOR PICKUP ✓' :
+                       isReady ? 'READY FOR PICKUP' :
                        isPreparing ? `COOKING ON DUM · ~${remaining}M LEFT` :
                        `NEW ORDER · PROMISED IN ${remaining}M`}
                     </div>
@@ -338,7 +338,7 @@ export default function KitchenPage({ user, setUser, outlets, socketRef, onBack,
                     )}
                   </div>
 
-                  {/* Primary Stage Action Button (Huge Touch Target) */}
+                  {/* Primary Stage Action Button */}
                   {next && (
                     <button
                       type="button"
@@ -349,61 +349,49 @@ export default function KitchenPage({ user, setUser, outlets, socketRef, onBack,
                     </button>
                   )}
 
-                  {/* Manager Override Section */}
-                  {user.role === 'manager' && (
-                    <div className="ticket-override-section">
-                      <button
-                        type="button"
-                        className="ticket-override-toggle-btn"
-                        onClick={() => setShowOverride({ ...showOverride, [o.id]: !isOverrideOpen })}
-                      >
-                        <span>Prep Time Override {isOverrideOpen ? '▴' : '▾'}</span>
-                        <span className="small muted">Adjust promised delivery time</span>
-                      </button>
-
-                      {isOverrideOpen && (
-                        <div className="ticket-override-drawer">
-                          <div className="override-quick-chips">
-                            {[15, 30, 45, 60].map((m) => (
-                              <button
-                                key={m}
-                                type="button"
-                                className="override-chip"
-                                onClick={() => doOverride(o, m)}
-                              >
-                                +{m}m
-                              </button>
-                            ))}
-                          </div>
-
-                          <div className="override-custom-row">
-                            <input
-                              type="number"
-                              min="5"
-                              max="240"
-                              placeholder="Mins (e.g. 45)"
-                              value={override[o.id] || ''}
-                              onChange={(e) => setOverride({ ...override, [o.id]: e.target.value })}
-                              className="override-num-input"
-                            />
-                            <button
-                              type="button"
-                              className="kbtn kbtn-dark"
-                              onClick={() => doOverride(o)}
-                            >
-                              Apply
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
+                  {/* Sleek Inline Prep Time Override for Kitchen & Manager */}
+                  <div className="ticket-override-strip">
+                    <div className="override-meta-row">
+                      <span className="override-strip-label">MANUAL PREP OVERRIDE</span>
                       {overrideNotice[o.id] && (
-                        <div className="override-success-msg">
-                          ✓ {overrideNotice[o.id]}
-                        </div>
+                        <span className="override-inline-toast">{overrideNotice[o.id]}</span>
                       )}
                     </div>
-                  )}
+                    <div className="override-strip-controls">
+                      <div className="override-presets">
+                        {[15, 30, 45, 60].map((m) => (
+                          <button
+                            key={m}
+                            type="button"
+                            className="kbtn-override-chip"
+                            onClick={() => doOverride(o, m)}
+                            title={`Set promised prep to ${m} mins`}
+                          >
+                            +{m}m
+                          </button>
+                        ))}
+                      </div>
+                      <div className="override-input-group">
+                        <input
+                          type="number"
+                          min="5"
+                          max="240"
+                          placeholder="Mins"
+                          value={override[o.id] || ''}
+                          onChange={(e) => setOverride({ ...override, [o.id]: e.target.value })}
+                          className="k-override-input"
+                          aria-label="Override prep minutes"
+                        />
+                        <button
+                          type="button"
+                          className="kbtn-override-apply"
+                          onClick={() => doOverride(o)}
+                        >
+                          Set
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               );
             })}
@@ -414,14 +402,14 @@ export default function KitchenPage({ user, setUser, outlets, socketRef, onBack,
         <section className="kds-stock-control-panel">
           <div className="kds-stock-header">
             <div>
-              <h2 className="serif" style={{ fontSize: 24, margin: '0 0 2px', color: '#F5F5F4' }}>
-                Instant 86-ing Stock Controls ({outlet?.name})
+              <h2 className="kds-stock-title">
+                86-ING STOCK CONTROLS · {outlet?.name?.toUpperCase()}
               </h2>
-              <p className="small muted" style={{ margin: 0 }}>
-                Paused items disappear in real-time from the customer menu for {outlet?.name} only. Restored immediately with 1 tap.
+              <p className="kds-stock-desc">
+                Tap any item to toggle out of stock. Paused items vanish in real-time from the customer menu for {outlet?.name} only.
               </p>
             </div>
-            <span className="small price" style={{ color: '#F59E0B' }}>
+            <span className="kds-stock-paused-count">
               {menu.filter((m) => m.outOfStock).length} Items Paused
             </span>
           </div>

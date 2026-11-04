@@ -131,9 +131,9 @@ export default function PartyPage({ user, outlets, goLogin }) {
             </div>
 
             <div className="party-policy-note">
-              ✓ Minimum 48 hours notice strictly observed<br />
-              ✓ FSSAI certified kitchen &amp; tamper-proof seal<br />
-              ✓ DPDP Act 2023 compliant data protection
+              • Minimum 48 hours notice strictly observed<br />
+              • FSSAI certified kitchen &amp; tamper-proof seal<br />
+              • DPDP Act 2023 compliant data protection
             </div>
           </div>
 

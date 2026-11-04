@@ -90,7 +90,7 @@ function Dashboard({ dash }) {
         <div className="row" style={{ marginBottom: 12 }}>
           <h3 style={{ margin: 0, fontSize: 18 }}>Active Kitchen Alerts (Late Orders)</h3>
           <span className="small" style={{ color: dash.lateOrders.length > 0 ? '#DC2626' : '#10B981', fontWeight: 600 }}>
-            {dash.lateOrders.length > 0 ? `⚠️ ${dash.lateOrders.length} Late order(s)` : '✓ All kitchens on schedule'}
+            {dash.lateOrders.length > 0 ? `${dash.lateOrders.length} Late order(s)` : 'All kitchens on schedule'}
           </span>
         </div>
         {dash.lateOrders.length === 0 ? (
@@ -325,7 +325,7 @@ function MenuCMS({ outlets, items, onSaved }) {
                     outletIds: active ? form.outletIds.filter((x) => x !== o.id) : [...form.outletIds, o.id],
                   })}
                 >
-                  {o.name} {active ? '✓' : ''}
+                  {o.name} {active ? '· Active' : ''}
                 </button>
               );
             })}
@@ -335,7 +335,7 @@ function MenuCMS({ outlets, items, onSaved }) {
         {/* Optional Price Overrides Collapsible */}
         <div className="admin-field-group">
           <button type="button" className="btn btn-sec btn-sm" onClick={() => setShowOverrides(!showOverrides)}>
-            {showOverrides ? 'Hide Outlet Price Overrides' : `Customize Prices by Outlet (${outlets.length} locations) ↓`}
+            {showOverrides ? 'Hide Outlet Price Overrides' : `Customize Prices by Outlet (${outlets.length} locations)`}
           </button>
           {showOverrides && (
             <div className="admin-overrides-grid" style={{ marginTop: 10 }}>

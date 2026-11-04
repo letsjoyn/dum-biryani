@@ -184,7 +184,7 @@ export default function Cart({
                 </div>
                 <p className="hint">Try DIRECT10 (10% off) or WELCOME100 (₹100 off over ₹499).</p>
                 {couponErr && <p className="small" style={{ color: '#7A2E12', marginTop: 4 }}>{couponErr}</p>}
-                {couponInfo && <p className="small" style={{ color: '#1A7F37', marginTop: 4 }}>✓ {couponInfo.code} — {couponInfo.description}</p>}
+                {couponInfo && <p className="small" style={{ color: '#1A7F37', marginTop: 4 }}>APPLIED: {couponInfo.code} — {couponInfo.description}</p>}
               </div>
 
               {/* Loyalty Reward Card */}
@@ -192,7 +192,7 @@ export default function Cart({
                 <div className={`cart-loyalty-card ${usePoints ? 'applied' : ''}`}>
                   <div className="cart-loyalty-header">
                     <div className="cart-loyalty-tag">
-                      <span className="cart-loyalty-dot">✦</span>
+                      <span className="cart-loyalty-dot">•</span>
                       <span>HOUSE LOYALTY · 5% BACK</span>
                     </div>
                     <span className="cart-loyalty-balance">{points} Pts Available</span>
@@ -211,7 +211,7 @@ export default function Cart({
                         className={`cart-loyalty-btn ${usePoints ? 'applied' : ''}`}
                         onClick={() => setUsePoints(!usePoints)}
                       >
-                        {usePoints ? 'Applied ✓' : `Redeem −${fmt(Math.floor(points / 100) * 50)}`}
+                        {usePoints ? 'Applied' : `Redeem −${fmt(Math.floor(points / 100) * 50)}`}
                       </button>
                     </div>
                   ) : (
