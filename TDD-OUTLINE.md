@@ -3,7 +3,7 @@
 **Project:** Dum House — Restaurant Chain Direct Ordering Platform with Live Kitchen Display  
 **Client Brief:** Problem 1 — Hyderabad Biryani and Hyderabadi Food Chain (14 Outlets + 3 Cloud Kitchens)  
 **GitHub Repository:** https://github.com/letsjoyn/dum-biryani  
-**Live Application:** http://localhost:4000 (Single-port Node/Express + Vite/React + WebSockets production build)  
+**Live URL:** https://dum-biryani.onrender.com  
 **Deployment Guide:** See `deployment.md` in repository root  
 **Candidate:** Nayvedya Joyn (`joynnayvedya@gmail.com`)  
 

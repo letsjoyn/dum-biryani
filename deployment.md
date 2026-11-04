@@ -2,7 +2,7 @@
 
 **GitHub Repository:** https://github.com/letsjoyn/dum-biryani
 
-**Live URL:** _Deployable via Render / Railway / Fly.io in 1 click using `render.yaml` (API + built React frontend + WebSockets on a single port)._
+**Live URL:** https://dum-biryani.onrender.com
 
 ## Demo logins (password for all: `Demo123!`)
 
