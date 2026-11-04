@@ -53,34 +53,44 @@ export default function App() {
   const [showLocModal, setShowLocModal] = useState(false);
 
   // ── Auth Animation State ──────────────────────────────────────────
-  const [authAnimation, setAuthAnimation] = useState(null); // { type: 'signin' | 'signout', role?: string, name?: string }
+  const [authAnimation, setAuthAnimation] = useState(null); // { type: 'signin' | 'signout', role?: string, name?: string, exiting?: boolean }
   const [latestOrderNo, setLatestOrderNo] = useState(null);
   const [orderSuccessModal, setOrderSuccessModal] = useState(null);
 
   const handleSignInSuccess = (u) => {
-    setAuthAnimation({ type: 'signin', role: u.role, name: u.name });
+    setAuthAnimation({ type: 'signin', role: u.role, name: u.name, exiting: false });
     setTimeout(() => {
       setUser(u);
       setAuthNotice('');
-      setAuthAnimation(null);
       let after = null;
       try { after = localStorage.getItem('dh_after_login'); localStorage.removeItem('dh_after_login'); } catch {}
       const allowed = after && !roleForView(after, u);
       const target = allowed ? after : (u.role === 'manager' ? 'admin' : (u.role === 'kitchen' ? 'kitchen' : 'menu'));
       setView(target);
       window.scrollTo(0, 0);
-    }, 1100);
+
+      // Smooth blur & fade-out transition
+      setAuthAnimation((prev) => (prev ? { ...prev, exiting: true } : null));
+      setTimeout(() => {
+        setAuthAnimation(null);
+      }, 380);
+    }, 850);
   };
 
   const handleSignOut = () => {
-    setAuthAnimation({ type: 'signout' });
+    setAuthAnimation({ type: 'signout', exiting: false });
     setTimeout(() => {
       setToken(null);
       setUser(null);
-      setAuthAnimation(null);
       setView('login');
       window.scrollTo(0, 0);
-    }, 1050);
+
+      // Smooth blur & fade-out transition
+      setAuthAnimation((prev) => (prev ? { ...prev, exiting: true } : null));
+      setTimeout(() => {
+        setAuthAnimation(null);
+      }, 380);
+    }, 800);
   };
 
   const handleOrderSuccess = (newOrder) => {
@@ -295,6 +305,7 @@ export default function App() {
     if (!authAnimation) return null;
     const isSignIn = authAnimation.type === 'signin';
     const role = authAnimation.role || 'customer';
+    const isExiting = !!authAnimation.exiting;
 
     let badge = 'CUSTOMER SESSION';
     let title = `Welcome, ${authAnimation.name ? authAnimation.name.split(' ')[0] : 'Customer'}`;
@@ -315,7 +326,11 @@ export default function App() {
     }
 
     return (
-      <div className={`auth-anim-overlay ${authAnimation.type} ${role}`} role="alert" aria-live="polite">
+      <div
+        className={`auth-anim-overlay ${authAnimation.type} ${role} ${isExiting ? 'exiting' : ''}`}
+        role="alert"
+        aria-live="polite"
+      >
         <div className="auth-anim-card">
           <div className="auth-anim-brand">Dum <i>House</i></div>
           <div className="auth-anim-badge">{badge}</div>
@@ -329,31 +344,32 @@ export default function App() {
     );
   };
 
-  // If full-screen auth animation is active, render it immediately
-  if (authAnimation) {
-    return renderAuthModal();
-  }
-
   // ── KDS shortcut: kitchen role gets KDS immediately ───────────────
   if (user?.role === 'kitchen') {
     return (
-      <KitchenPage
-        user={user} setUser={setUser}
-        outlets={outlets} socketRef={socketRef}
-        onSignOut={handleSignOut}
-      />
+      <>
+        <KitchenPage
+          user={user} setUser={setUser}
+          outlets={outlets} socketRef={socketRef}
+          onSignOut={handleSignOut}
+        />
+        {renderAuthModal()}
+      </>
     );
   }
 
   // Manager viewing kitchen view
   if (user?.role === 'manager' && view === 'kitchen') {
     return (
-      <KitchenPage
-        user={user} setUser={setUser}
-        outlets={outlets} socketRef={socketRef}
-        onBack={() => setView('admin')} backLabel="← Back to Admin"
-        onSignOut={handleSignOut}
-      />
+      <>
+        <KitchenPage
+          user={user} setUser={setUser}
+          outlets={outlets} socketRef={socketRef}
+          onBack={() => setView('admin')} backLabel="← Back to Admin"
+          onSignOut={handleSignOut}
+        />
+        {renderAuthModal()}
+      </>
     );
   }
 
@@ -545,6 +561,9 @@ export default function App() {
           onOrdered={handleOrderSuccess}
         />
       )}
+
+      {/* Full-screen auth transition with smooth blur and fade-out */}
+      {renderAuthModal()}
     </div>
   );
 }
