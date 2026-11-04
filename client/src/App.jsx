@@ -373,21 +373,21 @@ export default function App() {
   // ── KDS shortcut: kitchen role gets KDS immediately ───────────────
   if (user?.role === 'kitchen') {
     return (
-      <>
+      <div key="kitchen" className="view-fade-enter">
         <KitchenPage
           user={user} setUser={setUser}
           outlets={outlets} socketRef={socketRef}
           onSignOut={handleSignOut}
         />
         {renderAuthModal()}
-      </>
+      </div>
     );
   }
 
   // Manager viewing kitchen view
   if (user?.role === 'manager' && view === 'kitchen') {
     return (
-      <>
+      <div key="kitchen-mgr" className="view-fade-enter">
         <KitchenPage
           user={user} setUser={setUser}
           outlets={outlets} socketRef={socketRef}
@@ -395,7 +395,7 @@ export default function App() {
           onSignOut={handleSignOut}
         />
         {renderAuthModal()}
-      </>
+      </div>
     );
   }
 
@@ -422,67 +422,69 @@ export default function App() {
       />
 
       <main className={`wrap ${view === 'track' ? 'main-track-view' : ''}`}>
-        {/* Auth-check loading */}
-        {!authChecked && ['track', 'admin', 'kitchen'].includes(view) && (
-          <div className="card" style={{ marginTop: 24 }}>Checking your sign-in…</div>
-        )}
+        <div key={view} className="view-fade-enter">
+          {/* Auth-check loading */}
+          {!authChecked && ['track', 'admin', 'kitchen'].includes(view) && (
+            <div className="card" style={{ marginTop: 24 }}>Checking your sign-in…</div>
+          )}
 
-        {/* Access denied */}
-        {authChecked && roleForView(view, user) === 'denied' && (
-          <div className="card" style={{ marginTop: 24, maxWidth: 500 }}>
-            <div className="eyebrow">Access</div>
-            <h2 className="serif" style={{ fontSize: 28, margin: '8px 0' }}>This page isn't for your account.</h2>
-            <p className="muted">{deniedText(view)}</p>
-            <button className="btn" onClick={() => setView('menu')}>Back to Order</button>
-          </div>
-        )}
+          {/* Access denied */}
+          {authChecked && roleForView(view, user) === 'denied' && (
+            <div className="card" style={{ marginTop: 24, maxWidth: 500 }}>
+              <div className="eyebrow">Access</div>
+              <h2 className="serif" style={{ fontSize: 28, margin: '8px 0' }}>This page isn't for your account.</h2>
+              <p className="muted">{deniedText(view)}</p>
+              <button className="btn" onClick={() => setView('menu')}>Back to Order</button>
+            </div>
+          )}
 
-        {/* Login */}
-        {!(authChecked && roleForView(view, user) === 'denied') && view === 'login' && (
-          <LoginPage
-            notice={authNotice}
-            onDone={handleSignInSuccess}
-          />
-        )}
+          {/* Login */}
+          {!(authChecked && roleForView(view, user) === 'denied') && view === 'login' && (
+            <LoginPage
+              notice={authNotice}
+              onDone={handleSignInSuccess}
+            />
+          )}
 
-        {/* Menu */}
-        {view === 'menu' && (
-          <MenuPage
-            user={user} outlets={outlets}
-            outletId={outletId} setOutletId={setOutletId}
-            areaName={areaName} setAreaName={setAreaName}
-            menu={menu} loading={loading} error={error} loadMenu={loadMenu}
-            cart={cart} addToCart={addToCart} onUpdateQty={updateCartQty}
-            suggestions={suggestions} addSuggestion={addSuggestion}
-            sugMsg={sugMsg} setSugMsg={setSugMsg}
-            cartNotice={cartNotice} setCartNotice={setCartNotice}
-            onOpenLocationModal={() => setShowLocModal(true)}
-          />
-        )}
+          {/* Menu */}
+          {view === 'menu' && (
+            <MenuPage
+              user={user} outlets={outlets}
+              outletId={outletId} setOutletId={setOutletId}
+              areaName={areaName} setAreaName={setAreaName}
+              menu={menu} loading={loading} error={error} loadMenu={loadMenu}
+              cart={cart} addToCart={addToCart} onUpdateQty={updateCartQty}
+              suggestions={suggestions} addSuggestion={addSuggestion}
+              sugMsg={sugMsg} setSugMsg={setSugMsg}
+              cartNotice={cartNotice} setCartNotice={setCartNotice}
+              onOpenLocationModal={() => setShowLocModal(true)}
+            />
+          )}
 
-        {/* Track */}
-        {view === 'track' && authChecked && (
-          <TrackPage
-            user={user}
-            socketRef={socketRef}
-            latestOrderNo={latestOrderNo}
-            onGoLogin={() => { setAuthNotice(''); setView('login'); }}
-            onQuickCustomerLogin={handleQuickCustomerLogin}
-          />
-        )}
+          {/* Track */}
+          {view === 'track' && authChecked && (
+            <TrackPage
+              user={user}
+              socketRef={socketRef}
+              latestOrderNo={latestOrderNo}
+              onGoLogin={() => { setAuthNotice(''); setView('login'); }}
+              onQuickCustomerLogin={handleQuickCustomerLogin}
+            />
+          )}
 
-        {/* Party */}
-        {view === 'party' && (
-          <PartyPage
-            user={user} outlets={outlets}
-            goLogin={() => { setAuthNotice(''); setView('login'); }}
-          />
-        )}
+          {/* Party */}
+          {view === 'party' && (
+            <PartyPage
+              user={user} outlets={outlets}
+              goLogin={() => { setAuthNotice(''); setView('login'); }}
+            />
+          )}
 
-        {/* Admin */}
-        {view === 'admin' && user?.role === 'manager' && (
-          <AdminPage outlets={outlets} socketRef={socketRef} />
-        )}
+          {/* Admin */}
+          {view === 'admin' && user?.role === 'manager' && (
+            <AdminPage outlets={outlets} socketRef={socketRef} />
+          )}
+        </div>
       </main>
 
       {/* Global Location Switcher Modal — Works from any tab */}
